@@ -1,9 +1,5 @@
-package 
+package
 {
-	import C3.MirrorMesh;
-	import C3.TeapotMesh;
-	import C3.WallMesh;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
@@ -26,13 +22,15 @@ package
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
 	
+	import C3.MirrorMesh;
+	import C3.TeapotMesh;
+	import C3.WallMesh;
+	
 	[SWF(width = "800", height = "600", frameRate="60")]
 	public class StencilMirror extends Sprite
 	{
 		private var m_context : Context3D;
 		private var m_shader : Program3D;
-		private var m_lightShader : Program3D;
-		private var m_light : Vector3D;
 		
 		private var m_projMatrix : PerspectiveMatrix3D = new PerspectiveMatrix3D()
 		private var m_worldMatrix : Matrix3D = new Matrix3D();
@@ -43,6 +41,7 @@ package
 		private var m_wall : WallMesh;
 		private var m_mirrorMesh : MirrorMesh;
 		private var m_teapot : TeapotMesh;
+		private var m_edgeTeapot : TeapotMesh;
 		private var m_mirrorTeapot : TeapotMesh;
 		private var m_shadowTeapot : TeapotMesh;
 		
@@ -65,11 +64,11 @@ package
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			
-			var tf : TextField = new TextField();
-			tf.text = "W.S.A.D 移动飞船\n方向键平行移动相机\nPage Up & Page Down 抬升降低相机";
-			tf.textColor = 0xffffff;
-			tf.width = 640;
-			addChild(tf);
+			var tip : TextField = new TextField();
+			tip.textColor = 0xFFFFFFFF;
+			tip.text = "控制键: W.S.A.D 方向键 PageUp PageDown";
+			tip.width = 800;
+			addChild(tip);
 		}
 		
 		private function onKeyDown(e:KeyboardEvent) : void
@@ -109,66 +108,6 @@ package
 			m_shader = m_context.createProgram();
 			m_shader.upload(vertex.agalcode, fragment.agalcode);
 			
-			var lightVertex : AGALMiniAssembler = new AGALMiniAssembler();
-			lightVertex.assemble(Context3DProgramType.VERTEX,
-				[
-					"m33 vt0.xyz, va1.xyz, vc8",
-					"nrm vt0.xyz, vt0.xyz",
-					"mov v0, vt0.xyz",
-					
-					"mov vt0, vc12",
-					"m33 vt0.xyz, vt0.xyz, vc4",
-					"nrm vt1.xyz, vt0.xyz",
-					"neg vt0.xyz, vt1.xyz",
-					"mov v1, vt0.xyz",
-					
-					"m44 vt0, va1, vc4",
-					"neg vt0, vt0",
-					"nrm vt0.xyz, vt0.xyz",
-					"sub vt0.xyz, vt0.xyz, vt1.xyz",
-					"nrm vt2.xyz, vt0.xtz",
-					"mov v2, vt2.xyz",
-					
-					"m44 op, va0, vc0",
-					"mov v3, va2"
-					].join("\n"));
-			
-			var lightFragment : AGALMiniAssembler = new AGALMiniAssembler();
-			lightFragment.assemble(Context3DProgramType.FRAGMENT,
-				[
-					"nrm ft0.xyz, v0.xyz",
-					"nrm ft1.xyz, v1.xyz",
-					"nrm ft2.xyz, v2.xyz",
-					
-					"mov ft3, fc0",
-					"mul ft3, ft3, fc1",
-					"mul ft3, ft3, fc6",
-					"mov ft4, fc2",
-					"mul ft4, ft4, fc3",
-					"mul ft4, ft4, fc6.yyyy",
-					"mov ft5, fc4",
-					"mul ft5, ft5, fc5",
-					"mul ft5, ft5, fc6.zzzz",
-					
-					"dp3 ft6, ft0.xyz, ft1.xyz",
-					"sat ft6, ft6",
-					
-					"dp3 ft7, ft0.xyz, ft2.xyz",
-					"sat ft7, ft7",
-					"pow ft7, ft7, fc6.wwww",
-					
-					"mul ft4, ft4, ft6",
-					"mul ft5, ft5, ft7",
-					"add ft3, ft3, ft4",
-					"add ft3, ft3, ft5",
-					"tex ft4, v3, fs0<2d,repeat,linear>",
-					"add ft3, ft3, ft4",
-					"mov oc, ft3"
-					].join("\n"));
-			
-			m_lightShader = m_context.createProgram();
-			m_lightShader.upload(lightVertex.agalcode, lightFragment.agalcode);
-			
 			m_projMatrix.identity();
 			m_projMatrix.perspectiveFieldOfViewRH(45,stage.stageWidth / stage.stageHeight, 0.001, 1000.0);
 			
@@ -187,13 +126,17 @@ package
 			m_teapot = new TeapotMesh(m_context);
 			m_teapot.moveTo(0,2,-5);
 			
+			m_edgeTeapot = new TeapotMesh(m_context);
+			m_edgeTeapot.moveTo(0,2,-5);
+			m_edgeTeapot.scale(1.1,1.1,1.1);
+			
 			m_mirrorTeapot = new TeapotMesh(m_context);
 			
 			var reflect : Vector.<Number> = Utils.getReflectionMatrix(new Vector3D(0,0,-1), new Vector3D(0,0,0));
 			var reflectMatrix : Matrix3D = new Matrix3D();
 			reflectMatrix.copyRawDataFrom(reflect);
 			
-			var shadow : Vector.<Number> = Utils.getShadowMatrix(new Vector3D(0,-1,0), new Vector3D(0,-1,0), new Vector3D(0,5,0), shadow);
+			var shadow : Vector.<Number> = Utils.getShadowMatrix(new Vector3D(0,-1,0), new Vector3D(0,-1,0), new Vector3D(0,5,0));
 			var shadowMatrix : Matrix3D = new Matrix3D();
 			shadowMatrix.copyRawDataFrom(shadow);
 			
@@ -204,7 +147,8 @@ package
 			m_shadowTeapot.setShadowMatrix(shadowMatrix);
 			m_shadowTeapot.setTexture(bmd);
 			
-			m_light = new Vector3D(0,0,-1);
+			bmd.fillRect(bmd.rect,0xFFFFFFFF);
+			m_edgeTeapot.setTexture(bmd);
 			
 			addEventListener(Event.ENTER_FRAME, onEnter);
 		}
@@ -234,7 +178,18 @@ package
 			m_cameraMatrix = m_viewMatrix.clone();
 			m_cameraMatrix.invert();
 			
-			m_teapot.render(m_cameraMatrix,m_projMatrix,m_lightShader,m_light);
+			//剔除
+			m_context.setCulling(Context3DTriangleFace.BACK);
+			m_context.setStencilActions(Context3DTriangleFace.FRONT,Context3DCompareMode.ALWAYS);
+			
+			m_edgeTeapot.render(m_cameraMatrix, m_projMatrix, m_shader);
+			m_edgeTeapot.rotation(t, Vector3D.Y_AXIS);
+			
+			//还原
+			m_context.setCulling(Context3DTriangleFace.FRONT);
+			m_context.setStencilActions(Context3DTriangleFace.BACK,Context3DCompareMode.ALWAYS);
+			
+			m_teapot.render(m_cameraMatrix,m_projMatrix,m_shader);
 			m_teapot.rotation(t, Vector3D.Y_AXIS);
 			
 			/**
@@ -255,9 +210,9 @@ package
 			
 			//混合模式为 1 * dest + 0 * 0 = dest. 目标颜色为墙体颜色和飞船颜色的混合
 			m_context.setBlendFactors(Context3DBlendFactor.SOURCE_COLOR, Context3DBlendFactor.DESTINATION_COLOR);
-			m_context.setCulling(Context3DTriangleFace.BACK);
+			m_context.setCulling(Context3DTriangleFace.FRONT);
 			
-			var shadow : Vector.<Number> = Utils.getShadowMatrix(new Vector3D(0,-1,0), new Vector3D(0,-1,0), new Vector3D(-m_shadowTeapot.position.x,5,0), shadow);
+			var shadow : Vector.<Number> = Utils.getShadowMatrix(new Vector3D(0,-1,0), new Vector3D(0,-1,0), new Vector3D(-m_shadowTeapot.position.x,5,0));
 			var shadowMatrix : Matrix3D = new Matrix3D();
 			shadowMatrix.copyRawDataFrom(shadow);
 			m_shadowTeapot.setShadowMatrix(shadowMatrix);
@@ -318,17 +273,28 @@ package
 			if(m_key[Keyboard.RIGHT])
 				m_viewMatrix.appendTranslation(-speed,0,0);
 			
-			if(m_key[Keyboard.W])
-				if(m_teapot.position.z < -1)m_teapot.move(0,0,speed);
-			
-			if(m_key[Keyboard.S])
+			if(m_key[Keyboard.W]){
+				if(m_teapot.position.z < -1){
+					m_teapot.move(0,0,speed);
+					m_edgeTeapot.move(0,0,speed);
+				}
+			}
+				
+			if(m_key[Keyboard.S]){
 				m_teapot.move(0,0,-speed);
-			
-			if(m_key[Keyboard.A])
+				m_edgeTeapot.move(0,0,-speed);
+			}
+				
+			if(m_key[Keyboard.A]){
 				m_teapot.move(speed,0,0);
+				m_edgeTeapot.move(speed,0,0);
+			}
+				
 			
-			if(m_key[Keyboard.D])
+			if(m_key[Keyboard.D]){
 				m_teapot.move(-speed,0,0);
+				m_edgeTeapot.move(-speed,0,0);
+			}	
 		}
 	}
 }

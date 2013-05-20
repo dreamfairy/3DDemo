@@ -77,7 +77,7 @@ package
 		}
 		
 		//计算光照投影矩阵
-		public static function getShadowMatrix(n : Vector3D, p : Vector3D, light : Vector3D, out : Vector.<Number>) : Vector.<Number>
+		public static function getShadowMatrix(n : Vector3D, p : Vector3D, light : Vector3D, out : Vector.<Number> = null) : Vector.<Number>
 		{
 			n.normalize();
 			//平行光的话，需要标准化光线方向，并逆转平面法线
