@@ -2,7 +2,9 @@ package C3.Ray
 {
 	import flash.geom.Vector3D;
 	
+	import C3.AABB;
 	import C3.CubeMesh;
+	import C3.IMesh;
 
 	public class Ray
 	{
@@ -46,7 +48,7 @@ package C3.Ray
 		}
 		
 		/**
-		 * 碰撞检测
+		 * 包围球碰撞检测
 		 */
 		public static function raySphereIntTest(ray : Ray, cube : CubeMesh) : Boolean
 		{
@@ -69,5 +71,31 @@ package C3.Ray
 			
 			return false;
 		}
+		
+		/**
+		 * AABB检测
+		 */
+		public static function rayAABBIntersect(ray : Ray, target : AABB) : Boolean
+		{
+			var length : Vector3D = target.center.subtract(ray.origin);
+			var c : Vector3D = length;
+			c.scaleBy(.5);
+			var w : Vector3D = c.clone();
+			w.normalize();
+			
+			var vx = Math.abs(w.x);
+			var vy = Math.abs(w.y);
+			var vz = Math.abs(w.z);
+			
+			if(Math.abs(c.x) > vx + target.hx) return false;
+			if(Math.abs(c.y) > vy + target.hy) return false;
+			if(Math.abs(c.z) > vz + target.hz) return false;
+			if(Math.abs(c.y * w.z - c.z * w.y) > target.hy * vz + target.hz * vy) return false;
+			if(Math.abs(c.x * w.z - c.z * w.x) > target.hx * vz + target.hz * vx) return false;
+			if(Math.abs(c.x * w.y - c.y * w.x) > target.hy * vy + target.hy * vx) return false;
+			
+			return true;
+		}
+		
 	}
 }

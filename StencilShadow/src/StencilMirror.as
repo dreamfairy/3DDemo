@@ -32,6 +32,9 @@ package
 		private var m_context : Context3D;
 		private var m_shader : Program3D;
 		
+		private var m_lightShader : Program3D;
+		private var m_light : Vector3D;
+		
 		private var m_projMatrix : PerspectiveMatrix3D = new PerspectiveMatrix3D()
 		private var m_worldMatrix : Matrix3D = new Matrix3D();
 		private var m_finalMatrix : Matrix3D = new Matrix3D();
@@ -108,6 +111,66 @@ package
 			m_shader = m_context.createProgram();
 			m_shader.upload(vertex.agalcode, fragment.agalcode);
 			
+			var lightVertex : AGALMiniAssembler = new AGALMiniAssembler();
+			lightVertex.assemble(Context3DProgramType.VERTEX,
+				[
+					"m33 vt0.xyz, va1.xyz, vc8",
+					"nrm vt0.xyz, vt0.xyz",
+					"mov v0, vt0.xyz",
+					
+					"mov vt0, vc12",
+					"m33 vt0.xyz, vt0.xyz, vc4",
+					"nrm vt1.xyz, vt0.xyz",
+					"neg vt0.xyz, vt1.xyz",
+					"mov v1, vt0.xyz",
+					
+					"m44 vt0, va1, vc4",
+					"neg vt0, vt0",
+					"nrm vt0.xyz, vt0.xyz",
+					"sub vt0.xyz, vt0.xyz, vt1.xyz",
+					"nrm vt2.xyz, vt0.xtz",
+					"mov v2, vt2.xyz",
+					
+					"m44 op, va0, vc0",
+					"mov v3, va2"
+				].join("\n"));
+			
+			var lightFragment : AGALMiniAssembler = new AGALMiniAssembler();
+			lightFragment.assemble(Context3DProgramType.FRAGMENT,
+				[
+					"nrm ft0.xyz, v0.xyz",
+					"nrm ft1.xyz, v1.xyz",
+					"nrm ft2.xyz, v2.xyz",
+					
+					"mov ft3, fc0",
+					"mul ft3, ft3, fc1",
+					"mul ft3, ft3, fc6",
+					"mov ft4, fc2",
+					"mul ft4, ft4, fc3",
+					"mul ft4, ft4, fc6.yyyy",
+					"mov ft5, fc4",
+					"mul ft5, ft5, fc5",
+					"mul ft5, ft5, fc6.zzzz",
+					
+					"dp3 ft6, ft0.xyz, ft1.xyz",
+					"sat ft6, ft6",
+					
+					"dp3 ft7, ft0.xyz, ft2.xyz",
+					"sat ft7, ft7",
+					"pow ft7, ft7, fc6.wwww",
+					
+					"mul ft4, ft4, ft6",
+					"mul ft5, ft5, ft7",
+					"add ft3, ft3, ft4",
+					"add ft3, ft3, ft5",
+					"tex ft4, v3, fs0<2d,repeat,linear>",
+					"add ft3, ft3, ft4",
+					"mov oc, ft3"
+				].join("\n"));
+			
+			m_lightShader = m_context.createProgram();
+			m_lightShader.upload(lightVertex.agalcode, lightFragment.agalcode);
+			
 			m_projMatrix.identity();
 			m_projMatrix.perspectiveFieldOfViewRH(45,stage.stageWidth / stage.stageHeight, 0.001, 1000.0);
 			
@@ -150,6 +213,8 @@ package
 			bmd.fillRect(bmd.rect,0xFFFFFFFF);
 			m_edgeTeapot.setTexture(bmd);
 			
+			m_light = new Vector3D(0,0,-1);
+			
 			addEventListener(Event.ENTER_FRAME, onEnter);
 		}
 		
@@ -189,7 +254,7 @@ package
 			m_context.setCulling(Context3DTriangleFace.FRONT);
 			m_context.setStencilActions(Context3DTriangleFace.BACK,Context3DCompareMode.ALWAYS);
 			
-			m_teapot.render(m_cameraMatrix,m_projMatrix,m_shader);
+			m_teapot.render(m_cameraMatrix,m_projMatrix,m_lightShader,m_light);
 			m_teapot.rotation(t, Vector3D.Y_AXIS);
 			
 			/**
