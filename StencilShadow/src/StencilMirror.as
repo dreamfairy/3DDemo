@@ -83,30 +83,22 @@ package
 			0, 1, 2  // top tri (TL, TR, BR)
 		]);
 
-		/** Constants to pass to the vertex shader for the post filter */
 		private static const POST_FILTER_VERTEX_CONSTANTS:Vector.<Number> = new <Number>[1, 2, 0, 0];
 		
-		/** Constants to pass to the fragment shader for the grayscale post filter */
 		private static const GRAYSCALE_FRAGMENT_CONSTANTS:Vector.<Number> = new <Number>[0.3, 0.59, 0.11, 0];
 		
-		/** Vertex shader for the red-only post filter */
 		private var redOnlyProgram:Program3D;
 		
-		/** Vertex shader for the green-only post filter */
 		private var greenOnlyProgram:Program3D;
 		
-		/** Vertex shader for the blue-only post filter */
 		private var blueOnlyProgram:Program3D;
 		
-		/** Vertex shader for the grayscale post filter */
 		private var grayscaleProgram:Program3D;
 		
 		private var waveProgram : Program3D;
 		
-		/** Vertex buffer for the full-screen quad to render post-filters with */
 		private var postFilterVertexBuffer:VertexBuffer3D;
 		
-		/** Index buffer for the full-screen quad to render post-filters with */
 		private var postFilterIndexBuffer:IndexBuffer3D;
 
 		public function StencilMirror()
@@ -315,35 +307,26 @@ package
 			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
 			fragmentShaderAGAL = assembler.agalcode;
 			
-			// Green-only post filter shader program
 			greenOnlyProgram = m_context.createProgram();
 			greenOnlyProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
 			
-			// Blue-only post filter fragment shader
 			fragSource = 
-				// Sample scene texture
 				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
 				
-				// Zero the non-blue channels
 				"sub ft0.xy, ft0.xy, ft0.xy\n" +
 				
 				"mov oc, ft0\n";
 			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
 			fragmentShaderAGAL = assembler.agalcode;
 			
-			// Blue-only post filter shader program
 			blueOnlyProgram = m_context.createProgram();
 			blueOnlyProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
 			
-			// Grayscale post filter fragment shader
 			fragSource = 
-				// Sample scene texture
 				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
 				
-				// Apply coefficients and compute sum
 				"dp3 ft0.x, ft0, fc0\n" +
 				
-				// Copy sum to all channels
 				"mov ft0.y, ft0.x\n" +
 				"mov ft0.z, ft0.x\n" +
 				
@@ -531,7 +514,6 @@ package
 			//还原深度测试
 			m_context.setDepthTest(true,Context3DCompareMode.LESS);
 			
-			// Render a full-screen quad with the scene texture to the actual screen
 			m_context.setProgram(program);
 			m_context.setTextureAt(0, m_sceneTexture);
 			m_context.clear(0.5, 0.5, 0.5);
@@ -540,13 +522,11 @@ package
 			m_cameraMatrix.invert();
 			
 			var cameraRotation : Number = Math.atan2(5,15)/Math.PI*180;
-			var cameraScale : Vector3D = m_projMatrix.decompose()[2]
 			
 			m_sceneModelMatrix.identity();
 			m_sceneModelMatrix.appendTranslation(0,0,0);
 			m_sceneModelMatrix.appendScale(20,20,20);
 			m_sceneModelMatrix.appendRotation(cameraRotation, Vector3D.X_AXIS);
-//			m_sceneModelMatrix.appendRotation(90, Vector3D.X_AXIS);
 			
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_sceneModelMatrix);
