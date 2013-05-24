@@ -12,8 +12,13 @@ package
 	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DStencilAction;
+	import flash.display3D.Context3DTextureFormat;
 	import flash.display3D.Context3DTriangleFace;
+	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
+	import flash.display3D.VertexBuffer3D;
+	import flash.display3D.textures.Texture;
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
@@ -21,12 +26,14 @@ package
 	import flash.geom.Vector3D;
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
+	import flash.utils.ByteArray;
+	import flash.utils.getTimer;
 	
 	import C3.MirrorMesh;
 	import C3.TeapotMesh;
 	import C3.WallMesh;
 	
-	[SWF(width = "800", height = "600", frameRate="60")]
+	[SWF(width = "800", height = "800", frameRate="60")]
 	public class StencilMirror extends Sprite
 	{
 		private var m_context : Context3D;
@@ -48,11 +55,60 @@ package
 		private var m_mirrorTeapot : TeapotMesh;
 		private var m_shadowTeapot : TeapotMesh;
 		
+		private var m_sceneTexture : Texture;
+		private var m_sceneModelMatrix : Matrix3D = new Matrix3D();
+		
+		[Embed(source="../source/seber.jpg")]
+		private var m_cubeBitmap : Class;
+		private var m_cubeTexture : Texture;
+		
+		[Embed(source="../source/noise.jpg")]
+		private var m_noiseBitmap : Class;
+		private var m_noiseTexture : Texture;
+		
 		private var m_key : Object = new Object();
 		
 		private static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
 		private static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
 		
+		private static const POST_FILTER_POSITIONS:Vector.<Number> = Vector.<Number>([
+			-1,  1, 1, 0, 0, // TL
+			1,  1, 1, 1, 0,// TR
+			1, -1, 1, 1, 1,// BR
+			-1, -1, 1, 0, 1  // BL
+		]);
+		
+		private static const POST_FILTER_TRIS:Vector.<uint> = Vector.<uint>([
+			0, 2, 3, // bottom tri (TL, BR, BL)
+			0, 1, 2  // top tri (TL, TR, BR)
+		]);
+
+		/** Constants to pass to the vertex shader for the post filter */
+		private static const POST_FILTER_VERTEX_CONSTANTS:Vector.<Number> = new <Number>[1, 2, 0, 0];
+		
+		/** Constants to pass to the fragment shader for the grayscale post filter */
+		private static const GRAYSCALE_FRAGMENT_CONSTANTS:Vector.<Number> = new <Number>[0.3, 0.59, 0.11, 0];
+		
+		/** Vertex shader for the red-only post filter */
+		private var redOnlyProgram:Program3D;
+		
+		/** Vertex shader for the green-only post filter */
+		private var greenOnlyProgram:Program3D;
+		
+		/** Vertex shader for the blue-only post filter */
+		private var blueOnlyProgram:Program3D;
+		
+		/** Vertex shader for the grayscale post filter */
+		private var grayscaleProgram:Program3D;
+		
+		private var waveProgram : Program3D;
+		
+		/** Vertex buffer for the full-screen quad to render post-filters with */
+		private var postFilterVertexBuffer:VertexBuffer3D;
+		
+		/** Index buffer for the full-screen quad to render post-filters with */
+		private var postFilterIndexBuffer:IndexBuffer3D;
+
 		public function StencilMirror()
 		{
 			stage ? init() : addEventListener(Event.ADDED_TO_STAGE, init);
@@ -69,7 +125,7 @@ package
 			
 			var tip : TextField = new TextField();
 			tip.textColor = 0xFFFFFFFF;
-			tip.text = "控制键: W.S.A.D 方向键 PageUp PageDown";
+			tip.text = "控制键: W.S.A.D 切换后期效果 0,1,2,3,4,5";
 			tip.width = 800;
 			addChild(tip);
 		}
@@ -171,6 +227,8 @@ package
 			m_lightShader = m_context.createProgram();
 			m_lightShader.upload(lightVertex.agalcode, lightFragment.agalcode);
 			
+			postProcessingSetup();
+			
 			m_projMatrix.identity();
 			m_projMatrix.perspectiveFieldOfViewRH(45,stage.stageWidth / stage.stageHeight, 0.001, 1000.0);
 			
@@ -218,18 +276,164 @@ package
 			addEventListener(Event.ENTER_FRAME, onEnter);
 		}
 		
+		private function postProcessingSetup() : void
+		{
+			var assembler:AGALMiniAssembler = new AGALMiniAssembler();
+			var vertSource:String = "m44 op, va0, vc0\nmov v0, va1\n";
+			assembler.assemble(Context3DProgramType.VERTEX, vertSource);
+			var vertexShaderAGAL:ByteArray = assembler.agalcode;
+			
+			var fragSource:String = "tex oc, v0, fs0 <2d,linear,mipnone>";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			var fragmentShaderAGAL:ByteArray = assembler.agalcode;
+
+			// Red-only post filter fragment shader
+			fragSource = 
+				// Sample scene texture
+				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
+				
+				// Zero the non-red channels
+				"sub ft0.yz, ft0.yz, ft0.yz\n" +
+				
+				"mov oc, ft0\n";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			fragmentShaderAGAL = assembler.agalcode;
+			
+			// Red-only post filter shader program
+			redOnlyProgram = m_context.createProgram();
+			redOnlyProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
+			
+			// Green-only post filter fragment shader
+			fragSource = 
+				// Sample scene texture
+				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
+				
+				// Zero the non-green channels
+				"sub ft0.xz, ft0.xz, ft0.xz\n" +
+				
+				"mov oc, ft0\n";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			fragmentShaderAGAL = assembler.agalcode;
+			
+			// Green-only post filter shader program
+			greenOnlyProgram = m_context.createProgram();
+			greenOnlyProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
+			
+			// Blue-only post filter fragment shader
+			fragSource = 
+				// Sample scene texture
+				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
+				
+				// Zero the non-blue channels
+				"sub ft0.xy, ft0.xy, ft0.xy\n" +
+				
+				"mov oc, ft0\n";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			fragmentShaderAGAL = assembler.agalcode;
+			
+			// Blue-only post filter shader program
+			blueOnlyProgram = m_context.createProgram();
+			blueOnlyProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
+			
+			// Grayscale post filter fragment shader
+			fragSource = 
+				// Sample scene texture
+				"tex ft0, v0, fs0 <2d,clamp,linear>\n" +
+				
+				// Apply coefficients and compute sum
+				"dp3 ft0.x, ft0, fc0\n" +
+				
+				// Copy sum to all channels
+				"mov ft0.y, ft0.x\n" +
+				"mov ft0.z, ft0.x\n" +
+				
+				"mov oc, ft0\n";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			fragmentShaderAGAL = assembler.agalcode;
+			
+			// Grayscale post filter shader program
+			grayscaleProgram = m_context.createProgram();
+			grayscaleProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
+			
+			fragSource = 
+				"mul ft0, v0, fc5.x\n"+
+				"add ft0,ft0,fc5.y \n"+
+				"mul ft1, v0, fc5.x\n"+
+				"add ft1,ft1,fc5.y \n"+
+				"tex ft2, ft0, fs1 <2d,linear,clamp>\n"+
+				"mul ft2, ft2, fc6.x\n"+
+				"sub ft2, ft2, fc6.y\n"+
+				
+				"tex ft3, ft1, fs1 <2d,linear,clamp>\n"+
+				"mul ft3, ft3, fc6.x\n"+
+				"sub ft3, ft3, fc6.y\n"+
+				
+				"add ft4, ft2, ft3\n"+
+				"nrm ft4.xyz, ft4\n"+
+				"mul ft4, ft4, fc5.w\n"+
+				"add ft5, v0,ft4\n"+
+				"tex ft1, ft5, fs0 <2d,linear,clamp>\n" +
+				"mov oc, ft1\n";
+			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
+			fragmentShaderAGAL = assembler.agalcode;
+			
+			waveProgram = m_context.createProgram();
+			waveProgram.upload(vertexShaderAGAL, fragmentShaderAGAL);
+
+			// Setup scene texture
+			m_sceneTexture = m_context.createTexture(
+				Utils.nextPowerOfTwo(stage.stageWidth),
+				Utils.nextPowerOfTwo(stage.stageHeight),
+				Context3DTextureFormat.BGRA,
+				true
+			);
+			
+			m_noiseTexture = Utils.getTexture(m_noiseBitmap, m_context);
+			
+//			m_sceneTexture = Utils.getTexture(m_cubeBitmap, m_context);
+
+			postFilterVertexBuffer = m_context.createVertexBuffer(4, 5);
+			postFilterVertexBuffer.uploadFromVector(POST_FILTER_POSITIONS, 0, 4);
+			postFilterIndexBuffer = m_context.createIndexBuffer(6);
+			postFilterIndexBuffer.uploadFromVector(POST_FILTER_TRIS, 0, 6);
+
+		}
+		
 		private var t : Number = 0;
 		private function onEnter(e:Event) : void
 		{
 			t += 1;
-			m_context.clear();
-			renderScene();
+			
+			switch(renderMode)
+			{
+				case 0:
+					renderScene();
+					break;
+				case 1:
+					renderWithPostFilter(redOnlyProgram, null);
+					break;
+				case 2:
+					m_context.setRenderToBackBuffer();
+					renderWithPostFilter(greenOnlyProgram, null);
+					break;
+				case 3:
+					renderWithPostFilter(blueOnlyProgram, null);
+					break;
+				case 4:
+					renderWithPostFilter(grayscaleProgram, GRAYSCALE_FRAGMENT_CONSTANTS);
+					break;
+				case 5:
+					renderWithPostFilter(waveProgram, Vector.<Number>([t]));
+					break;
+			}
+			
 			renderKeyBoard();
 			m_context.present();
 		}
 		
 		private function renderScene() : void
 		{
+			m_context.clear(.5,.5,.5);
 			//还原混合模式
 			m_context.setBlendFactors(Context3DBlendFactor.ONE,Context3DBlendFactor.ZERO);
 			//对于不参与的模板测试的三角形,统一都通过测试,但不改变模板值
@@ -292,7 +496,7 @@ package
 			 */
 			
 			//清空模板
-			m_context.clear(0,0,0,1,1,0,Context3DClearMask.STENCIL);
+			m_context.clear(.5,.5,.5,1,1,0,Context3DClearMask.STENCIL);
 			
 			//设置模板值为0,之后绘制的三角形会使模板值递增
 			m_context.setStencilReferenceValue(0);
@@ -311,32 +515,97 @@ package
 			m_mirrorTeapot.rotation(t, Vector3D.Y_AXIS);
 		}
 		
+		private function renderWithPostFilter(program:Program3D, fragConsts:Vector.<Number>): void
+		{
+			// Render the scene to the scene texture
+			m_context.setRenderToTexture(m_sceneTexture, true);
+			renderScene();
+			m_context.setRenderToBackBuffer();
+			
+			//还原混合模式
+			m_context.setBlendFactors(Context3DBlendFactor.ONE,Context3DBlendFactor.ZERO);
+			//对于不参与的模板测试的三角形,统一都通过测试,但不改变模板值
+			m_context.setStencilActions(Context3DTriangleFace.BACK,Context3DCompareMode.ALWAYS);
+			//还原裁剪面
+			m_context.setCulling(Context3DTriangleFace.FRONT);
+			//还原深度测试
+			m_context.setDepthTest(true,Context3DCompareMode.LESS);
+			
+			// Render a full-screen quad with the scene texture to the actual screen
+			m_context.setProgram(program);
+			m_context.setTextureAt(0, m_sceneTexture);
+			m_context.clear(0.5, 0.5, 0.5);
+			
+			m_cameraMatrix = m_viewMatrix.clone();
+			m_cameraMatrix.invert();
+			
+			var cameraRotation : Number = Math.atan2(5,15)/Math.PI*180;
+			var cameraScale : Vector3D = m_projMatrix.decompose()[2]
+			
+			m_sceneModelMatrix.identity();
+			m_sceneModelMatrix.appendTranslation(0,0,0);
+			m_sceneModelMatrix.appendScale(20,20,20);
+			m_sceneModelMatrix.appendRotation(cameraRotation, Vector3D.X_AXIS);
+//			m_sceneModelMatrix.appendRotation(90, Vector3D.X_AXIS);
+			
+			m_finalMatrix.identity();
+			m_finalMatrix.append(m_sceneModelMatrix);
+			m_finalMatrix.append(m_cameraMatrix);
+			m_finalMatrix.append(m_projMatrix);
+			
+			if(fragConsts && fragConsts.length == 1){
+				m_context.setTextureAt(1,m_noiseTexture);
+				m_context.setVertexBufferAt(0, postFilterVertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+				m_context.setVertexBufferAt(1, postFilterVertexBuffer,3, Context3DVertexBufferFormat.FLOAT_2);
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,4,Vector.<Number>( [ 0.3, 0.59, 0.11, 1] ) );
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,5,Vector.<Number>( [ 0.03, getTimer()*0.00005, 1, 0.1] ) );
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,6,Vector.<Number>( [ 2, 1, 1,1] ) );
+				m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_finalMatrix, true);
+				m_context.drawTriangles(postFilterIndexBuffer,0, 2);
+				
+				m_context.setTextureAt(1,null);
+				
+				return;
+			}
+			
+			m_context.setVertexBufferAt(0, postFilterVertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+			m_context.setVertexBufferAt(1, postFilterVertexBuffer,3, Context3DVertexBufferFormat.FLOAT_2);
+			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_finalMatrix, true);
+			if (fragConsts)
+			{
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, fragConsts);
+			}
+			m_context.drawTriangles(postFilterIndexBuffer,0, 2);
+
+		}
+		
 		private function onMouseWheel(e:MouseEvent) : void
 		{
 			m_viewMatrix.appendTranslation(0,0,e.delta);
 		}
 		
+		private var renderMode : uint = 0;
 		private function renderKeyBoard() : void
 		{
 			var speed : Number = .1;
 			
-			if(m_key[Keyboard.PAGE_UP])
-				m_viewMatrix.appendTranslation(0,speed,0);
+//			if(m_key[Keyboard.PAGE_UP])
+//				m_viewMatrix.appendTranslation(0,speed,0);
 			
-			if(m_key[Keyboard.PAGE_DOWN])
-				m_viewMatrix.appendTranslation(0,-speed,0);
+//			if(m_key[Keyboard.PAGE_DOWN])
+//				m_viewMatrix.appendTranslation(0,-speed,0);
 			
-			if(m_key[Keyboard.UP])
-				m_viewMatrix.appendTranslation(0,0,speed);
+//			if(m_key[Keyboard.UP])
+//				m_viewMatrix.appendTranslation(0,0,speed);
 			
-			if(m_key[Keyboard.DOWN])
-				m_viewMatrix.appendTranslation(0,0,-speed);
+//			if(m_key[Keyboard.DOWN])
+//				m_viewMatrix.appendTranslation(0,0,-speed);
 			
-			if(m_key[Keyboard.LEFT])
-				m_viewMatrix.appendTranslation(speed,0,0);
+//			if(m_key[Keyboard.LEFT])
+//				m_viewMatrix.appendTranslation(speed,0,0);
 			
-			if(m_key[Keyboard.RIGHT])
-				m_viewMatrix.appendTranslation(-speed,0,0);
+//			if(m_key[Keyboard.RIGHT])
+//				m_viewMatrix.appendTranslation(-speed,0,0);
 			
 			if(m_key[Keyboard.W]){
 				if(m_teapot.position.z < -1){
@@ -360,6 +629,30 @@ package
 				m_teapot.move(-speed,0,0);
 				m_edgeTeapot.move(-speed,0,0);
 			}	
+			
+			if(m_key[Keyboard.NUMBER_0]){
+				renderMode = 0;
+			}
+			
+			if(m_key[Keyboard.NUMBER_1]){
+				renderMode = 1;
+			}
+			
+			if(m_key[Keyboard.NUMBER_2]){
+				renderMode = 2;
+			}
+			
+			if(m_key[Keyboard.NUMBER_3]){
+				renderMode = 3;
+			}
+			
+			if(m_key[Keyboard.NUMBER_4]){
+				renderMode = 4;
+			}
+			
+			if(m_key[Keyboard.NUMBER_5]){
+				renderMode = 5;
+			}
 		}
 	}
 }

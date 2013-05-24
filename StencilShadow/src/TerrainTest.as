@@ -176,7 +176,7 @@ package
 			m_terrainMesh = new Terrain(m_context,64,64,10,1,new terrainData);
 			m_terrainMesh.genTexture(new Vector3D(0,1,0));
 //			m_terrainMesh.setTexture(Bitmap(new textureData).bitmapData);
-			m_terrainMesh.moveTo(0,-100,0);
+			m_terrainMesh.moveTo(0,-10,0);
 			
 			m_mirrorMesh = new TeapotMesh(m_context);
 			m_mirrorMesh.rotation(90,Vector3D.Z_AXIS);

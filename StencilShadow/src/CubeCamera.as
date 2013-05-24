@@ -1,13 +1,7 @@
 package 
 {
-	import C3.Camera.Camera;
-	import C3.CubeMesh;
-	import C3.Ray.Ray;
-	import C3.TeapotMesh;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	import com.adobe.utils.PerspectiveMatrix3D;
-	import com.greensock.TweenLite;
 	
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
@@ -21,6 +15,11 @@ package
 	import flash.geom.Vector3D;
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
+	
+	import C3.CubeMesh;
+	import C3.TeapotMesh;
+	import C3.Camera.Camera;
+	import C3.Ray.Ray;
 
 	[SWF(width="640",height="480",frameRate="60")]
 	public class CubeCamera extends Sprite
@@ -69,49 +68,56 @@ package
 			var sceenX : Number = stage.mouseX;
 			var sceenY : Number = stage.mouseY;
 			
-			var viewX : Number = (sceenX * 2  / stage.stageWidth) - 1;
-			var viewY : Number = (-sceenY * 2 / stage.stageHeight) + 1;
-			
 			var ray : Ray = new Ray();
-
-			//将射线转换到相机所在空间
-			var viewMat : Matrix3D = m_camera.getViewMatrix().clone();
-			ray.origin = viewMat.transformVector(new Vector3D(0,0,0));
 			
-			//将相机反转,相机的平移和旋转总是和世界坐标系相反的
-			viewMat.invert();
-			ray.direction =  viewMat.deltaTransformVector(new Vector3D(viewX,viewY,1));
-			ray.direction.normalize();
+			var viewX : Number = (stage.mouseX * 2 - stage.stageWidth)/stage.stageWidth;
+			var viewY : Number = (stage.mouseY * 2 - stage.stageHeight)/stage.stageHeight;
 			
-			//取出相机的缩放值
-			var scale : Vector3D = m_proj.decompose()[2];
-			var walk : Vector3D = m_camera.getViewMatrix().decompose()[0];
-			walk.z += 10;
-			
-			walk.x *= scale.x * scale.x;
-			walk.y *= scale.y * scale.y;
-			walk.z *= scale.z * scale.z;
-			
-			
-			//将射线转到目标所在空间
-			var cubeMesh : CubeMesh;
-			for each(cubeMesh in m_cubeList)
-			{
-
-				//相交检测
-				var cubePos : Vector3D = cubeMesh.transform.position;
-				cubePos = cubePos.add(walk);
-				
-				cubePos.x *= scale.x;
-				cubePos.y *= scale.y;
-				cubePos.z *= scale.z;
-
-
-				if(Ray.RaySphereIntersect(ray.origin, ray.direction, cubePos, 2))
-					TweenLite.to(cubeMesh,1,{rotateY : 1080});
-				else
-					TweenLite.to(cubeMesh,1,{rotateY : 0});
-			}
+			trace(viewX, viewY);
+			Ray.rayAway3DAABBIntersect(viewX, viewY, ray, m_proj, m_camera, m_cubeList[0]);
+//			var viewX : Number = (sceenX * 2  / stage.stageWidth) - 1;
+//			var viewY : Number = (-sceenY * 2 / stage.stageHeight) + 1;
+//			
+//			var ray : Ray = new Ray();
+//
+//			//将射线转换到相机所在空间
+//			var viewMat : Matrix3D = m_camera.getViewMatrix().clone();
+//			ray.origin = viewMat.transformVector(new Vector3D(0,0,0));
+//			
+//			//将相机反转,相机的平移和旋转总是和世界坐标系相反的
+//			viewMat.invert();
+//			ray.direction =  viewMat.deltaTransformVector(new Vector3D(viewX,viewY,1));
+//			ray.direction.normalize();
+//			
+//			//取出相机的缩放值
+//			var scale : Vector3D = m_proj.decompose()[2];
+//			var walk : Vector3D = m_camera.getViewMatrix().decompose()[0];
+//			walk.z += 10;
+//			
+//			walk.x *= scale.x * scale.x;
+//			walk.y *= scale.y * scale.y;
+//			walk.z *= scale.z * scale.z;
+//			
+//			
+//			//将射线转到目标所在空间
+//			var cubeMesh : CubeMesh;
+//			for each(cubeMesh in m_cubeList)
+//			{
+//
+//				//相交检测
+//				var cubePos : Vector3D = cubeMesh.transform.position;
+//				cubePos = cubePos.add(walk);
+//				
+//				cubePos.x *= scale.x;
+//				cubePos.y *= scale.y;
+//				cubePos.z *= scale.z;
+//
+//
+//				if(Ray.RaySphereIntersect(ray.origin, ray.direction, cubePos, 2))
+//					TweenLite.to(cubeMesh,1,{rotateY : 1080});
+//				else
+//					TweenLite.to(cubeMesh,1,{rotateY : 0});
+//			}
 		}
 		
 		private function onKeyUp(e:KeyboardEvent) : void

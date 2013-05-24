@@ -64,6 +64,19 @@ package
 			return texture;
 		}
 		
+		public static function nextPowerOfTwo(v:uint): uint
+		{
+			v--;
+			v |= v >> 1;
+			v |= v >> 2;
+			v |= v >> 4;
+			v |= v >> 8;
+			v |= v >> 16;
+			v++;
+			return v;
+		}
+
+		
 		//计算平面投影矩阵，n为平面法向量，p为平面上一点
 		public static function getReflectionMatrix(n:Vector3D,p:Vector3D):Vector.<Number>{
 			n.normalize();

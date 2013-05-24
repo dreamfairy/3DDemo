@@ -21,9 +21,7 @@ package C3.Camera
 		{
 			var v : Vector3D = new Vector3D(x,y,z,1);
 			
-			var invertTransform : Matrix3D = m_transform.clone();
-			
-			v = invertTransform.transformVector(v);
+			v = m_transform.transformVector(v);
 			
 			//计算缩放
 			var inv : Number = 1 / v.w;
