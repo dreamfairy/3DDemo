@@ -343,11 +343,11 @@ package
 				"add ft0,ft0,fc5.y \n"+
 				"mul ft1, v0, fc5.x\n"+
 				"add ft1,ft1,fc5.y \n"+
-				"tex ft2, ft0, fs1 <2d,linear,clamp>\n"+
+				"tex ft2, ft0, fs1 <2d,linear,repeat>\n"+
 				"mul ft2, ft2, fc6.x\n"+
 				"sub ft2, ft2, fc6.y\n"+
 				
-				"tex ft3, ft1, fs1 <2d,linear,clamp>\n"+
+				"tex ft3, ft1, fs1 <2d,linear,repeat>\n"+
 				"mul ft3, ft3, fc6.x\n"+
 				"sub ft3, ft3, fc6.y\n"+
 				
@@ -355,7 +355,7 @@ package
 				"nrm ft4.xyz, ft4\n"+
 				"mul ft4, ft4, fc5.w\n"+
 				"add ft5, v0,ft4\n"+
-				"tex ft1, ft5, fs0 <2d,linear,clamp>\n" +
+				"tex ft1, ft5, fs0 <2d,linear,repeat>\n" +
 				"mov oc, ft1\n";
 			assembler.assemble(Context3DProgramType.FRAGMENT, fragSource);
 			fragmentShaderAGAL = assembler.agalcode;
