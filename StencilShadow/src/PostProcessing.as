@@ -1,5 +1,7 @@
 package
 {
+	import C3.CubeMesh;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
@@ -18,8 +20,8 @@ package
 	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
-	
-	import C3.CubeMesh;
+	import flash.text.TextField;
+	import flash.ui.Keyboard;
 
 	[SWF(width = "800", height = "800", frameRate="60")]
 	public class PostProcessing extends Sprite
@@ -64,6 +66,20 @@ package
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+			
+			var info : TextField = new TextField();
+			info.textColor = 0x000000;
+			info.text = "按1开启模糊,按2关闭模糊";
+			info.width = info.textWidth + 10;
+			info.height = info.textHeight + 10;
+			info.selectable = false;
+			
+			info.scaleX = info.scaleY = 2;
+			
+			info.x = stage.stageWidth - info.width >> 1;
+			info.y = stage.stageHeight - info.height >> 1;
+			
+			addChild(info);
 		}
 		
 		private function onKeyDown(e:KeyboardEvent) : void
@@ -170,6 +186,16 @@ package
 //			renderCube();
 			renderPostProcessing();
 			m_context.present();
+			renderKeyBoard();
+		}
+		
+		private function renderKeyBoard() : void
+		{
+			if(m_key[Keyboard.NUMBER_1])
+				m_needBlur = true;
+			
+			if(m_key[Keyboard.NUMBER_2])
+				m_needBlur = false;
 		}
 		
 		private function renderCube() : void
@@ -179,6 +205,7 @@ package
 			m_cube.rotation(t, Vector3D.Y_AXIS);
 		}
 		
+		private var m_needBlur : Boolean = false;
 		private function renderPostProcessing() : void
 		{
 			// Render the scene to the scene texture
@@ -186,7 +213,7 @@ package
 			renderCube();
 			m_context.setRenderToBackBuffer();
 			
-			m_context.setProgram(m_blurShader);
+			m_context.setProgram(m_needBlur ? m_blurShader : m_normalShader);
 			m_context.setTextureAt(0, m_sceneTexture);
 			m_context.clear(0.5,0.5,0.5);
 			
@@ -202,8 +229,11 @@ package
 			m_context.setVertexBufferAt(1,m_sceneVertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_2);
 			
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_finalMatrix, true);
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([0,0,0,0]));
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, m_blurConstant, m_blurConstant.length/4);
+			
+			if(m_needBlur){
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([0,0,0,0]));
+				m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, m_blurConstant, m_blurConstant.length/4);
+			}
 			
 			m_context.drawTriangles(m_sceneIndexBuffer,0,2);
 			m_context.setTextureAt(0,null);
@@ -229,6 +259,8 @@ package
 			constant = constant || new Vector.<Number>();
 			constant.length = 0;
 			
+			data.push("mov ft" + tempIndex + ", fc" + initIndex);
+			
 			//横向遍历
 			for(var i : int = -step; i <= step; i++)
 			{
@@ -238,7 +270,6 @@ package
 					//跳过中心区
 					if(i == 0 && j == 0) continue;
 					constant.push(i * stepX, j * stepY);
-					data.push("mov ft" + tempIndex + ", fc" + initIndex);
 					data.push("add ft" + tempIndex + ".xy, " + coord + ".xy, fc" + constantOffset + (loopNum % 2 == 0 ? ".xy" : ".zw"));
 					data.push("tex ft" + tempIndex + ", ft" + tempIndex + ", fs" + textureIndex + "<2d, repeat, linear, mipnone>");
 					data.push(
