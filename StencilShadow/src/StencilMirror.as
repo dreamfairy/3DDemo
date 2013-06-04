@@ -260,7 +260,7 @@ package
 			m_shadowTeapot.setShadowMatrix(shadowMatrix);
 			m_shadowTeapot.setTexture(bmd);
 			
-			bmd.fillRect(bmd.rect,0xFFFFFFFF);
+			bmd.fillRect(bmd.rect,0xFF0000FF);
 			m_edgeTeapot.setTexture(bmd);
 			
 			m_light = new Vector3D(0,0,-1);

@@ -57,7 +57,7 @@ package
 			m_context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, true);
 			m_context.enableErrorChecking = true;
 			
-			m_projMatrix.perspectiveFieldOfViewRH(45, stage.stageWidth / stage.stageHeight, 0.001, 1000.0);
+			m_projMatrix.perspectiveFieldOfViewRH(45, stage.stageWidth / stage.stageHeight, 1, 5000.0);
 		}
 		
 		protected function onMouseWheel(e:MouseEvent) : void
