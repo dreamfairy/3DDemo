@@ -5,6 +5,8 @@ package
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DProfile;
+	import flash.display3D.Context3DRenderMode;
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
@@ -12,7 +14,7 @@ package
 	import flash.geom.Vector3D;
 	import flash.ui.Keyboard;
 
-	[SWF(width = "800", height = "600", frameRate="60")]
+	[SWF(width = "1024", height = "1024", frameRate="60")]
 	public class ContextBase extends Sprite
 	{
 		protected var m_context : Context3D;
@@ -34,7 +36,8 @@ package
 		private function init(e:Event = null) : void
 		{
 			stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, onCreateContext);
-			stage.stage3Ds[0].requestContext3D();
+			trace(Context3DProfile.BASELINE_EXTENDED);
+			stage.stage3Ds[0].requestContext3D(Context3DRenderMode.AUTO, Context3DProfile.BASELINE_EXTENDED);
 			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);

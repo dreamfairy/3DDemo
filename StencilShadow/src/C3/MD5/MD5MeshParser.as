@@ -80,7 +80,7 @@ package C3.MD5
 				for(var j : int = 0; j < numVerts; ++j)
 				{
 					var zeroWeights : int = countZeroWeightJoints(vertexData[j], meshData.md5_weight);
-					var totalJoints : int = vertexData[j].weight_count - zeroWeights; //忽略0权重的关节
+					var totalJoints : int = vertexData[j].weight_count - zeroWeights;  //总骨骼数不包含0权重的骨骼
 					if(totalJoints > maxJointCount)
 						maxJointCount = totalJoints;
 				}
@@ -88,7 +88,7 @@ package C3.MD5
 		}
 		
 		/**
-		 * 计算0权重关节
+		 * 计算0权重关节数量
 		 */
 		private function countZeroWeightJoints(vertex : MD5Vertex, weights : Vector.<MD5Weight>) : int
 		{

@@ -1,5 +1,8 @@
 package C3.MD5
 {
+	import flash.display3D.IndexBuffer3D;
+	import flash.display3D.VertexBuffer3D;
+
 	/**
 	 * 网格数据
 	 */
@@ -47,5 +50,17 @@ package C3.MD5
 			
 			return indexVec;
 		}
+		
+		public var uvRawData : Vector.<Number>;
+		public var indiceRawData : Vector.<uint>;
+		public var vertexRawData : Vector.<Number>;
+		public var jointIndexRawData : Vector.<Number>;
+		public var jointWeightRawData : Vector.<Number>;
+		
+		public var uvBuffer : VertexBuffer3D;
+		public var indiceBuffer : IndexBuffer3D;
+		public var vertexBuffer : VertexBuffer3D;
+		public var jointIndexBuffer : VertexBuffer3D;
+		public var jointWeightBuffer : VertexBuffer3D;
 	}
 }

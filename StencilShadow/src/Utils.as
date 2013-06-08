@@ -112,16 +112,30 @@ package
 		}
 		
 		//向量左乘矩阵
-		public static function subjectMat(vec : Vector3D, mat : Matrix3D, out : Vector3D) : Vector3D
+		public static function subjectMat(vec : Vector3D, mat : Matrix3D, out : Vector3D = null) : Vector3D
 		{
 			var data : Vector.<Number> = mat.rawData;
 			
-			if(null == out) out = new Vector3D();
+			out ||= new Vector3D();
 			
 			out.x = (vec.x * data[0] + vec.y * data[4] + vec.z * data[8] + vec.w * data[12]);
 			out.y = (vec.x * data[1] + vec.y * data[5] + vec.z * data[9] + vec.w * data[13]);
 			out.z = (vec.x * data[2] + vec.y * data[6] + vec.z * data[10] + vec.w * data[14]);
 			out.w = (vec.x * data[3] + vec.y * data[7] + vec.z * data[11] + vec.w * data[15]);
+			
+			return out;
+		}
+		
+		public static function subjectMat2(vec : Vector3D, mat : Matrix3D, out : Vector3D = null) : Vector3D
+		{
+			var data : Vector.<Number> = mat.rawData;
+			
+			out ||= new Vector3D();
+			
+			out.x = (vec.x * data[0] + vec.y * data[1] + vec.z * data[2] + vec.w * data[3]);
+			out.y = (vec.x * data[4] + vec.y * data[5] + vec.z * data[6] + vec.w * data[7]);
+			out.z = (vec.x * data[8] + vec.y * data[9] + vec.z * data[10] + vec.w * data[11]);
+			out.w = (vec.x * data[12] + vec.y * data[13] + vec.z * data[14] + vec.w * data[15]);
 			
 			return out;
 		}
