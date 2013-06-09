@@ -36,8 +36,7 @@ package
 		private function init(e:Event = null) : void
 		{
 			stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, onCreateContext);
-			trace(Context3DProfile.BASELINE_EXTENDED);
-			stage.stage3Ds[0].requestContext3D(Context3DRenderMode.AUTO, Context3DProfile.BASELINE_EXTENDED);
+			stage.stage3Ds[0].requestContext3D();
 			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);

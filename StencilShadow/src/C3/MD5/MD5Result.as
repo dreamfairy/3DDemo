@@ -285,51 +285,6 @@ package C3.MD5
 			cpuAnimVertexBuffer.uploadFromVector(cpuAnimVertexRawData,0,cpuAnimVertexRawData.length/3);
 		}
 		
-		private function cpuCalcJoint2(meshIndex : int, view : Matrix3D) : void
-		{
-			var meshData : MeshData = md5MeshParser.md5_mesh[meshIndex];
-			var vertexLen : int = meshData.md5_vertex.length;
-			var vertex : MD5Vertex;
-			
-			var vertexList : Vector.<Number> = meshData.vertexRawData;
-			var indiceList : Vector.<Number> = meshData.jointIndexRawData;
-			var weightList : Vector.<Number> = meshData.jointWeightRawData;
-			
-			var finalVertex : Vector3D;
-			var curVertex : Vector3D;
-			var curMatrix : Matrix3D;
-			var vectorAttributes : Array = ["x","y","z","w"];
-			
-			cpuAnimVertexRawData ||= new Vector.<Number>();
-			cpuAnimVertexRawData.length = 0;
-			
-			//遍历每个顶点
-			for(var i : int = 0; i < vertexLen; i++)
-			{
-				finalVertex = new Vector3D();
-				vertex = meshData.md5_vertex[i];
-				
-				//遍历每个权重
-				for(var j : int = 0; j < vertex.weight_count; j++)
-				{
-					//取出当前顶点的权重
-					var weight : MD5Weight = meshData.md5_weight[vertex.weight_index + j];
-					//取出当前顶点对应的关节
-					var joint2 : MD5Joint = md5MeshParser.md5_joint[weight.jointID];
-					curMatrix = cpuAnimMatrix[weight.jointID * 4];
-					var wv : Vector3D = curMatrix.transformVector(weight.pos);
-					wv.scaleBy(weight.bias);
-					finalVertex = finalVertex.add(wv);
-				}
-				
-				cpuAnimVertexRawData.push(finalVertex.x,finalVertex.y,finalVertex.z);
-			}
-			var CountVertex : int = cpuAnimVertexRawData.length
-			
-			cpuAnimVertexBuffer ||= context.createVertexBuffer(cpuAnimVertexRawData.length/3,3);
-			cpuAnimVertexBuffer.uploadFromVector(cpuAnimVertexRawData,0,cpuAnimVertexRawData.length/3);
-		}
-		
 		public function clearCpuData() : void
 		{
 			cpuAnimVertexBuffer = null;
@@ -344,18 +299,13 @@ package C3.MD5
 			var frameData : MD5FrameData = md5AnimParser.frameData[frame];
 			var meshData : MeshData = md5MeshParser.md5_mesh[meshIndex];
 			
+			CalcMeshAnim(frameData);
 			if(useCPU){
-				cpuCalcMeshAnim(frameData);
-				cpuCalcJoint(meshIndex, view);
+				cpuCalcJoint(meshIndex, view);	
 			}
-				
-			else{
-				calcMeshAnim(null, frameData);
-			}
-				
 		}
 		
-		private function cpuCalcMeshAnim(frameData : MD5FrameData) : void
+		private function CalcMeshAnim(frameData : MD5FrameData) : void
 		{
 			//取出关节数据
 			var joints : Vector.<MD5Joint> = md5MeshParser.md5_joint;
@@ -419,78 +369,9 @@ package C3.MD5
 				matrix3D.append(joint.bindPose);
 				
 				var vc : int = i * 4;
-				var finalMatrix : Matrix3D = matrix3D.clone();
-//				finalMatrix.invert();
-//				finalMatrix.transpose();
-				cpuAnimMatrix[vc] = finalMatrix;
-			}
-		}
-		
-		private function calcMeshAnim(meshData : MeshData, frameData : MD5FrameData) : void
-		{
-			//取出关节数据
-			var joints : Vector.<MD5Joint> = md5MeshParser.md5_joint;
-			var jointsNum : int = joints.length;
-			
-			var joint : MD5Joint;
-			var parentJoint : MD5Joint;
-			for(var i : int = 0; i < jointsNum; i++)
-			{
-				//从基本帧开始偏移
-				var baseFrame : MD5BaseFrameData = md5AnimParser.baseFrameData[i];
-				var animatedPos : Vector3D = baseFrame.position;
-				var animatedOrient : Quaternion = baseFrame.orientation;
-				
-				//将帧数据替换掉基本帧中对应的数据
-				var hierachy : MD5HierarchyData = md5AnimParser.hierarchy[i];
-				
-				var flags : int = hierachy.flags;
-				var j : int = 0;
-				if(flags & 1) //tx
-					animatedPos.x = frameData.components[hierachy.startIndex + j++];
-				
-				if(flags & 2) //ty
-					animatedPos.y = frameData.components[hierachy.startIndex + j++];
-				
-				if(flags & 4)
-					animatedPos.z = frameData.components[hierachy.startIndex + j++];
-				
-				if(flags & 8)
-					animatedOrient.x = frameData.components[hierachy.startIndex + j++];
-				
-				if(flags & 16)
-					animatedOrient.y = frameData.components[hierachy.startIndex + j++];
-				
-				if(flags & 32)
-					animatedOrient.z = frameData.components[hierachy.startIndex + j++];
-				
-				//计算w
-				var t : Number = 1 - animatedOrient.x * animatedOrient.x - animatedOrient.y * animatedOrient.y - 
-					animatedOrient.z * animatedOrient.z;
-				animatedOrient.w = t < 0 ? 0 : - Math.sqrt(t);
-				
-				var matrix3D : Matrix3D = animatedOrient.toMatrix3D();
-				matrix3D.appendTranslation(animatedPos.x, animatedPos.y, animatedPos.z);
-				
-				//取出当前关节
-				joint = joints[i];
-				
-				if(joint.parentIndex < 0){
-					joint.bindPose = matrix3D;
+				if(useCPU){
+					cpuAnimMatrix[vc] = matrix3D;
 				}else{
-					//如果该关节有父级，需要先附带上父级的旋转和偏移
-					parentJoint = joints[joint.parentIndex];
-					matrix3D.append(parentJoint.bindPose);
-					joint.bindPose = matrix3D;
-				}
-				
-				matrix3D = joint.inverseBindPose.clone();
-				matrix3D.append(joint.bindPose);
-				
-				//一个矩阵占用4个常量寄存器
-				var vc : int = i * 4;
-				//这是一个补丁，正式版中不需要
-				if(vc < 124){
 					context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, vc, matrix3D, true);
 				}
 			}

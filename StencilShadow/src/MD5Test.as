@@ -8,6 +8,8 @@ package
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
+	import flash.text.TextField;
+	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
 	
 	import C3.MD5.MD5Result;
@@ -51,6 +53,16 @@ package
 			
 			stage.addEventListener(Event.ENTER_FRAME, onEnter);
 			addChild(new Stats);
+			
+			var tf : TextField = new TextField();
+			tf.textColor = 0xFFFFFF;
+			tf.text = "方向键及鼠标滚轮控制相机. 1 切换到原始网格 2 切换到骨骼动画\n苍白的茧 | 追逐繁星的苍之茧\nhttp://www.dreamfairy.cn/blog";
+			tf.width = tf.textWidth + 10;
+			tf.height = tf.textHeight + 10;
+			tf.y = stage.stageHeight - tf.height >> 1;
+			tf.x = stage.stageWidth - tf.width >> 1;
+			tf.selectable = false;
+			addChild(tf);
 		}
 		
 		private var t : Number = 0;
@@ -108,12 +120,25 @@ package
 				md5Result.clearCpuData();
 			}
 			m_context.present();
+			
+			renderKeyBoard();
+		}
+		
+		protected override function renderKeyBoard():void
+		{
+			super.renderKeyBoard();
+			
+			if(m_key[Keyboard.NUMBER_1])
+				m_hasAnimData = false;
+			
+			if(m_key[Keyboard.NUMBER_2])
+				m_hasAnimData = true;
 		}
 		
 		[Embed(source="../source/hellknight/hellknight.md5mesh", mimeType="application/octet-stream")]
 		private var mesh : Class;
 		
-		[Embed(source="../source/hellknight/attack2.md5anim", mimeType="application/octet-stream")]
+		[Embed(source="../source/hellknight/idle2.md5anim", mimeType="application/octet-stream")]
 		private var anim : Class;
 	
 		[Embed(source="../source/hellknight/hellknight_diffuse.jpg")]
