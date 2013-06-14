@@ -186,17 +186,26 @@ package C3.MD5
 				vertexStr = getAnimAgal();
 			}else{
 				vertexStr = "m44 op, va0, vc124 \n"+
-					"mov v0, va1";
+					"mov v0, va1 \n";
 			}
-			trace(vertexStr);
 			
 			vertexShader = new AGALMiniAssembler();
 			vertexShader.assemble(Context3DProgramType.VERTEX, vertexStr);
 			
 			fragmentShader = new AGALMiniAssembler();
 			fragmentShader.assemble(Context3DProgramType.FRAGMENT,
+				//纹理采样
 				"tex ft0, v0, fs0<2d, linear, repeat>\n" +
-				"mov oc, ft0");
+				"tex ft1, v0, fs1<2d, linear, repeat>\n" +
+				//灯光点乘法线
+				"dp3 ft2, ft1, fc2\n" +
+//				"neg ft2, ft2\n" + 
+				"sat ft2, ft2\n"+
+				
+				"mul ft3, ft0, ft2\n" +
+				"add ft3, ft3, fc0\n" +
+				"mul ft3, ft3, fc1\n" +
+				"mov oc, ft3");
 			
 			program = context.createProgram();
 			program.upload(vertexShader.agalcode, fragmentShader.agalcode);

@@ -1,5 +1,6 @@
 package
 {
+	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
@@ -12,9 +13,10 @@ package
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
 	
+	import C3.CubeMesh;
 	import C3.MD5.MD5Result;
 
-	[SWF(width = "800", height = "800", frameRate="30")]
+	[SWF(width = "1440", height = "800", frameRate="30")]
 	public class MD5Test extends ContextBase
 	{
 		public function MD5Test()
@@ -43,6 +45,22 @@ package
 			md5Result.loadAnim(new anim as ByteArray);
 			
 			m_texture = Utils.getTexture(textureData,m_context);
+			m_normalTexture = Utils.getTexture(normalData,m_context);
+			m_lightTexture = Utils.getTexture(lightData, m_context);
+//			m_specularTexture = Utils.getTexture(specularData, m_context);
+			
+			m_light = new CubeMesh(m_context, m_lightTexture);
+			m_light.scale(5,5,5);
+			
+			m_lightDirection = new Matrix3D();
+			
+			m_ambientLight = Vector.<Number>([.1,.1,.1,0]);
+			
+			var color : uint = 0xFFFFFF;
+			var r : Number = ((color & 0xFF0000) >> 16 )/256;
+			var g : Number = ((color  & 0x00FF00) >> 8)/256;
+			var b : Number =  (color & 0x0000FF)/256;
+			m_lightColor = Vector.<Number>([r,g,b,1]);
 			
 //			m_headTexture = Utils.getTexture(headTextureData, m_context);
 //			m_equipTexture = Utils.getTexture(equipTextureData, m_context);
@@ -62,13 +80,18 @@ package
 			tf.y = stage.stageHeight - tf.height >> 1;
 			tf.x = stage.stageWidth - tf.width >> 1;
 			tf.selectable = false;
-			addChild(tf);
+//			addChild(tf);
+			
+			m_viewMatrix.identity();
+			m_viewMatrix.appendTranslation(0,30,100);
+			m_viewMatrix.invert();
 		}
 		
 		private var t : Number = 0;
 		private function onEnter(e:Event) : void
 		{
 			m_context.clear(0,0,0,0);
+			m_context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
 			
 			t += 1;
 			
@@ -78,9 +101,10 @@ package
 						
 			m_modelMatrix.identity();
 			m_modelMatrix.appendRotation(-90,Vector3D.X_AXIS);
+			m_modelMatrix.appendRotation(-90,Vector3D.Y_AXIS);
 			m_modelMatrix.appendRotation(t, Vector3D.Y_AXIS);
 			m_modelMatrix.appendScale(.5,.5,.5);
-			m_modelMatrix.appendTranslation(0,-30,-100);
+//			m_modelMatrix.appendTranslation(0,-30,-100);
 			
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_modelMatrix);
@@ -89,7 +113,18 @@ package
 			
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
 			
+			var lightPos : Vector3D = m_lightDirection.position.clone();
+//			lightPos.negate();
+			lightPos.normalize();
+			
 			m_context.setTextureAt(0, m_texture);
+			m_context.setTextureAt(1, m_normalTexture);
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([lightPos.x,lightPos.y,lightPos.z,1]));
+			
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, m_ambientLight);
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, m_lightColor);
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, Vector.<Number>([1,2,0,0]));
+			
 			for(var i : int = 0; i < md5Result.meshDataNum; i++){
 				var vertexBuffer : VertexBuffer3D = md5Result.vertexBufferList[i];
 				var uvBuffer : VertexBuffer3D = md5Result.uvBufferList[i];
@@ -119,9 +154,27 @@ package
 //				m_context.setTextureAt(0, m_texturenull);
 				md5Result.clearCpuData();
 			}
+			
+			m_context.setTextureAt(0, null);
+			m_context.setTextureAt(1, null);
+			
+			renderLight();
 			m_context.present();
 			
 			renderKeyBoard();
+		}
+		
+		protected function renderLight() : void
+		{
+			m_lightDirection.identity();
+			m_lightDirection.appendTranslation(Math.cos(t/50) * 50, 30, Math.sin(t/50) * 50);
+			m_lightDirection.pointAt(new Vector3D(), CAM_FACING, CAM_UP);
+			
+			var pos : Vector3D = m_lightDirection.position;
+			
+			m_context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);;
+			m_light.moveTo(pos.x,pos.y,pos.z);
+			m_light.render(m_viewMatrix,m_projMatrix,null);
 		}
 		
 		protected override function renderKeyBoard():void
@@ -144,6 +197,15 @@ package
 		[Embed(source="../source/hellknight/hellknight_diffuse.jpg")]
 		private var textureData : Class;
 		
+		[Embed(source="../source/hellknight/hellknight_normals.png")]
+		private var normalData : Class;
+		
+		[Embed(source="../source/hellknight/hellknight_normals.png")]
+		private var specularData : Class;
+		
+		[Embed(source="../source/bluelight.png")]
+		private var lightData : Class;
+		
 //		[Embed(source="../source/meizi/chujitou.jpg")]
 //		private var headTextureData : Class;
 //		
@@ -160,6 +222,12 @@ package
 		private var m_hasMeshData : Boolean;
 		private var m_hasAnimData : Boolean;
 		private var m_texture : Texture;
+		private var m_normalTexture : Texture;
+		private var m_specularTexture : Texture;
+		private var m_lightTexture : Texture;
+		private var m_lightDirection : Matrix3D;
+		private var m_ambientLight : Vector.<Number>;
+		private var m_lightColor : Vector.<Number>;
 		private var m_currentFrame : int;
 		private var m_modelMatrix : Matrix3D = new Matrix3D();
 		
@@ -168,5 +236,7 @@ package
 		private var m_weaponTexture : Texture;
 		private var m_faceTexture : Texture;
 		private var m_textureList : Vector.<Texture>;
+		
+		private var m_light : CubeMesh;
 	}
 }
