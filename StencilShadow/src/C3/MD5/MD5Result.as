@@ -199,13 +199,15 @@ package C3.MD5
 				"tex ft1, v0, fs1<2d, linear, repeat>\n" +
 				//灯光点乘法线
 				"dp3 ft2, ft1, fc2\n" +
-//				"neg ft2, ft2\n" + 
+				"neg ft2, ft2\n" + 
 				"sat ft2, ft2\n"+
 				
+				//混合环境光
 				"mul ft3, ft0, ft2\n" +
-				"add ft3, ft3, fc0\n" +
+				//混合灯光颜色
 				"mul ft3, ft3, fc1\n" +
-				"mov oc, ft3");
+				//输出
+				"add oc, ft3, fc0");
 			
 			program = context.createProgram();
 			program.upload(vertexShader.agalcode, fragmentShader.agalcode);

@@ -6,7 +6,7 @@ package C3.Ray
 	
 	import C3.AABB;
 	import C3.CubeMesh;
-	import C3.IMesh;
+	import C3.Mesh.IMesh;
 	import C3.Camera.Camera;
 
 	public class Ray

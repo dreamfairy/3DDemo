@@ -58,7 +58,7 @@ package
 			
 			var color : uint = 0xFFFFFF;
 			var r : Number = ((color & 0xFF0000) >> 16 )/256;
-			var g : Number = ((color  & 0x00FF00) >> 8)/256;
+			var g : Number = ((color & 0x00FF00) >> 8)/256;
 			var b : Number =  (color & 0x0000FF)/256;
 			m_lightColor = Vector.<Number>([r,g,b,1]);
 			
@@ -114,8 +114,8 @@ package
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
 			
 			var lightPos : Vector3D = m_lightDirection.position.clone();
-//			lightPos.negate();
 			lightPos.normalize();
+			lightPos.negate();
 			
 			m_context.setTextureAt(0, m_texture);
 			m_context.setTextureAt(1, m_normalTexture);
@@ -168,7 +168,7 @@ package
 		{
 			m_lightDirection.identity();
 			m_lightDirection.appendTranslation(Math.cos(t/50) * 50, 30, Math.sin(t/50) * 50);
-			m_lightDirection.pointAt(new Vector3D(), CAM_FACING, CAM_UP);
+//			m_lightDirection.pointAt(new Vector3D(), CAM_FACING, CAM_UP);
 			
 			var pos : Vector3D = m_lightDirection.position;
 			

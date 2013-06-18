@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties analytics="false" mainApplicationPath="LightTest.as" projectUUID="a8032c30-95c2-4a7e-9df7-bb36367cce5e" version="11">
+<actionScriptProperties analytics="false" mainApplicationPath="ShadowMap.as" projectUUID="a8032c30-95c2-4a7e-9df7-bb36367cce5e" version="11">
   <compiler additionalCompilerArguments="-locale en_US" advancedTelemetry="false" autoRSLOrdering="true" copyDependentFiles="true" flexSDK="Flex 4.6.0" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src" strict="true" targetPlayerVersion="11.1.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath/>
     <libraryPath defaultLinkType="0">
@@ -32,6 +32,7 @@
     <sourceAttachmentPath/>
   </compiler>
   <applications>
+    <application path="ShadowMap.as"/>
     <application path="LightTest.as"/>
     <application path="MD5Test.as"/>
     <application path="PostProcessing.as"/>

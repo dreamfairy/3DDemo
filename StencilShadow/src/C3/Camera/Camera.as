@@ -221,7 +221,7 @@ package C3.Camera
 		private var m_right : Vector3D = new Vector3D(1,0,0);
 		private var m_up : Vector3D = new Vector3D(0,1,0);
 		private var m_look : Vector3D = new Vector3D(0,0,1);
-		private var m_pos : Vector3D = new Vector3D(0,0,10);
+		private var m_pos : Vector3D = new Vector3D(0,0,0);
 		private var m_type : uint;
 		private var m_target : TeapotMesh;
 		
