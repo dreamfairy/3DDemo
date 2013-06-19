@@ -4,8 +4,10 @@ package
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	
+	import C3.AOI3DAXIS;
 	import C3.PlaneMesh;
 	import C3.View;
+	import C3.Material.ColorMaterial;
 
 	[SWF(width = "800", height = "800", frameRate="30")]
 	public class ShadowMap extends Sprite
@@ -23,9 +25,8 @@ package
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
 			addChild(m_view);
 			
-			m_plane = new PlaneMesh("plane",10,10);
+			m_plane = new PlaneMesh("plane",10,10, 2, AOI3DAXIS.XY, new ColorMaterial(0xFF0000,1));
 			m_plane.z = -20;
-			m_plane.rotateX = 90;
 			m_view.scene.addChild(m_plane);
 			
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
