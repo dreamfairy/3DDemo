@@ -8,6 +8,7 @@ package C3.Light
 		
 		private var m_ambient : Vector.<Number>
 		private var m_color : Vector.<Number>;
+		private var m_lightFov : Number = 0;
 		
 		public function SimpleLight(color : uint, alpha : Number) : void
 		{
@@ -15,6 +16,16 @@ package C3.Light
 			var g : Number = ((color & 0x00FF00) >> 8)/256;
 			var b : Number = (color & 0x0000FF)/256;
 			m_color = Vector.<Number>([r,g,b,alpha]);
+		}
+		
+		public function set fov(value : Number) : void
+		{
+			m_lightFov = value;
+		}
+		
+		public function get fov() : Number
+		{
+			return m_lightFov;
 		}
 		
 		public function setAmbient(r : Number, g : Number, b : Number, a : Number) : void

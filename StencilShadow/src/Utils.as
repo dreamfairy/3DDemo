@@ -13,6 +13,8 @@ package
 	{
 		public static function getTexture(textureData : Class, context3D : Context3D) : Texture
 		{
+			if(null == context3D) return null;
+			
 			var myTextureData : Bitmap = new textureData;
 			var texture : Texture = context3D.createTexture(myTextureData.width,myTextureData.height,Context3DTextureFormat.BGRA,false);
 			var ws : int = myTextureData.bitmapData.width;

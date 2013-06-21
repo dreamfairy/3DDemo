@@ -6,11 +6,12 @@ package C3
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
 	import flash.events.Event;
-	import flash.events.KeyboardEvent;
-	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
+	import flash.geom.Rectangle;
 	
 	import C3.Camera.Camera;
+	import C3.PostRender.IPostRender;
+	import C3.PostRender.ShadowMapping;
 
 	public class View extends Sprite implements IDispose
 	{
@@ -25,6 +26,7 @@ package C3
 			m_proj.perspectiveFieldOfViewRH(45, m_width/m_height,1,5000.0);
 			m_worldMatrix = new Matrix3D();
 			m_finalMatrix = new Matrix3D();
+			m_postRenderList = new Vector.<IPostRender>();
 			
 			m_rootContainer = new Object3DContainer("root",null);
 			m_rootContainer.isRoot = true;
@@ -41,12 +43,7 @@ package C3
 			stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, onCreateContext);
 			stage.stage3Ds[0].requestContext3D();
 			
-			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
-			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-			stage.addEventListener(MouseEvent.CLICK, onMouseClick);
-			stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
-//			stage.addEventListener(MouseEvent.RIGHT_CLICK, onMouseRightClick);
-			
+			viewport = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
 		}
 		
 		private function onCreateContext(e:Event) : void
@@ -73,7 +70,9 @@ package C3
 			if(!m_renderablle) return;
 			
 			context.clear();
+			postProcessing(true);
 			m_rootContainer.render();
+			postProcessing(false);
 			context.present();
 			onAfterRender();
 		}
@@ -88,29 +87,39 @@ package C3
 			
 		}
 		
-		private function onKeyDown(e:KeyboardEvent) : void
+		/**
+		 * 后期渲染
+		 */
+		private function postProcessing(before : Boolean) : void
 		{
-			
+			for each(var item : IPostRender in m_postRenderList)
+			{
+//				before?item.renderBefore():item.renderAfter();
+			}
 		}
 		
-		private function onKeyUp(e:KeyboardEvent) : void
+		public function addPostItem(item : IPostRender) : void
 		{
+			if(m_postRenderList.indexOf(item) == -1)
+				m_postRenderList.push(item);
 			
+			//如果后期效果时一个阴影图，则需要通知模型更新此ShadowMapping,并改变其 fragment
+			if(item is ShadowMapping)
+				m_rootContainer.shadowMapping = item;
 		}
 		
-		private function onMouseClick(e:MouseEvent) : void
+		public function removePostItem(item : IPostRender) : void
 		{
-			
+			var index : int = m_postRenderList.indexOf(item);
+			m_postRenderList.splice(index, 1);
 		}
 		
-		private function onMouseMove(e:MouseEvent) : void
+		public function removeAllPostItem() : void
 		{
-			
-		}
-		
-		private function onMouseRightClick(e:MouseEvent) : void
-		{
-			
+			while(m_postRenderList.length){
+				var item : IPostRender = m_postRenderList.shift();
+				item.dispose();
+			}
 		}
 		
 		public function get projMatrix() : Matrix3D
@@ -134,6 +143,7 @@ package C3
 		private var m_enableErrorCheck : Boolean;
 		private var m_rootContainer : Object3DContainer;
 		private var m_renderablle : Boolean;
+		private var m_postRenderList : Vector.<IPostRender>;
 		
 		private var m_proj : PerspectiveMatrix3D;
 		private var m_worldMatrix : Matrix3D;
@@ -141,5 +151,6 @@ package C3
 		
 		public static var context : Context3D;
 		public static var camera : Camera;
+		public static var viewport : Rectangle;
 	}
 }

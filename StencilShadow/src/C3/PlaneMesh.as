@@ -1,5 +1,7 @@
 package C3
 {
+	import flash.geom.Vector3D;
+	
 	import C3.Material.IMaterial;
 
 	public class PlaneMesh extends Object3D
@@ -54,6 +56,25 @@ package C3
 			
 			calcIndices(segment);
 			calcUV();
+			calcNormal();
+		}
+		
+		/**
+		 * 计算法线
+		 */
+		private function calcNormal() : void
+		{
+			var normalList : Vector.<Number>;
+			var v1 : Vector3D = new Vector3D(m_vertexRawData[0],m_vertexRawData[1],m_vertexRawData[2]);
+			var v2 : Vector3D = new Vector3D(m_vertexRawData[3],m_vertexRawData[4],m_vertexRawData[5]);
+			
+			v1.normalize();
+			v2.normalize();
+			
+			var norm : Vector3D = v1.crossProduct(v2);
+			normalList = Vector.<Number>([norm.x,norm.y,norm.z]);
+			
+			normalRawData = normalList;
 		}
 		
 		private function fillVertexList(list : Vector.<Number>, x : Number, y : Number) : void

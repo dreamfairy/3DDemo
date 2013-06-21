@@ -1,6 +1,8 @@
 package C3.Material
 {
 	import flash.display3D.textures.Texture;
+	
+	import C3.PostRender.IPostRender;
 
 	public class ColorMaterial implements IMaterial
 	{
@@ -22,6 +24,7 @@ package C3.Material
 		
 		public function dispose():void
 		{
+			m_texture.dispose();
 			m_colorVector = null;
 		}
 		
@@ -30,7 +33,7 @@ package C3.Material
 			m_colorVector = Vector.<Number>([r,g,b,a]);
 		}
 		
-		public function getFragmentStr():String
+		public function getFragmentStr(item : IPostRender):String
 		{
 			return m_fragmentStr;
 		}

@@ -4,6 +4,8 @@ package C3.MD5
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
+	
+	import C3.Event.AOI3DLOADEREVENT;
 
 	public class MD5MeshParser extends EventDispatcher
 	{
@@ -57,6 +59,9 @@ package C3.MD5
 				
 				if(_reachedEOF){
 					calculateMaxJointCount();
+					for each(var mesh : MeshData in md5_mesh){
+						this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.ON_MESH_LOADED,mesh));
+					}
 					this.dispatchEvent(new Event(Event.COMPLETE));
 					break;
 				}

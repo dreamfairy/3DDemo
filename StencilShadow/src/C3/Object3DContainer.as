@@ -3,13 +3,14 @@ package C3
 	import flash.geom.Matrix3D;
 	
 	import C3.Material.IMaterial;
+	import C3.PostRender.IPostRender;
 	
 	public class Object3DContainer extends Object3D
 	{
-		public function Object3DContainer(name:String, mat:IMaterial)
+		public function Object3DContainer(name:String="", mat:IMaterial = null)
 		{
 			super(name, mat);
-			m_tranform = new Matrix3D();
+			m_transform = new Matrix3D();
 			m_modelList = new Vector.<Object3D>();
 		}
 		
@@ -21,6 +22,19 @@ package C3
 		public function set view(value : View) : void
 		{
 			m_view = value;
+		}
+		
+		/**
+		 * 只支持一个shadow mapping
+		 */
+		public override function set shadowMapping(item:IPostRender):void
+		{
+			super.shadowMapping = item;
+			
+			for each(var model : Object3D in m_modelList)
+			{
+				model.shadowMapping = item;
+			}
 		}
 		
 		public function addChild(target : Object3D) : void
@@ -84,7 +98,21 @@ package C3
 			if(m_transformDirty)
 				updateTransform();
 			
-			return m_tranform;
+			return m_transform;
+		}
+		
+		/**
+		 * 这里要特殊处理，把相机放在proj之前
+		 */
+		public function appendChildMatrix(matrix : Matrix3D) : void
+		{
+			if(!m_isRoot) {
+				matrix.append(m_transform);
+			}
+			else{
+				matrix.append(View.camera.getViewMatrix());
+				matrix.append(m_view.projMatrix);
+			}
 		}
 		
 		public override function render() : void
@@ -100,12 +128,11 @@ package C3
 		{
 			super.dispose();
 			m_modelList = null;
-			m_tranform = null;
+			m_transform = null;
 		}
 		
 		private var m_view : View;
 		private var m_isRoot : Boolean;
-		private var m_tranform : Matrix3D;
-		private var m_modelList : Vector.<Object3D>;
+		protected var m_modelList : Vector.<Object3D>;
 	}
 }

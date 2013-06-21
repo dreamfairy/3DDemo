@@ -134,6 +134,8 @@ package C3.Camera
 		
 		public function getViewMatrix() : Matrix3D
 		{
+			if(m_replaceMatrix) return m_replaceMatrix;
+			
 			//使相机的各坐标系互相垂直
 			m_look.normalize();
 			m_up = m_look.crossProduct(m_right);//up向量和look及right成直角
@@ -172,6 +174,22 @@ package C3.Camera
 			return m_transform;
 		}
 		
+		/**
+		 * 替换相机矩阵
+		 */
+		public function replaceViewMatrix(matrix : Matrix3D) : void
+		{
+			m_replaceMatrix = matrix;
+		}
+		
+		/**
+		 * 还原相机矩阵
+		 */
+		public function restoreViewMatrix() : void
+		{
+			m_replaceMatrix = null;
+		}
+		
 		public function setLook(x : Number, y : Number, z : Number) : void
 		{
 			m_look.setTo(x,y,z);
@@ -207,8 +225,8 @@ package C3.Camera
 			return m_look;
 		}
 		
-		private static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
-		private static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
+		public static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
+		public static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
 		
 		private var m_isRH : Boolean;
 		
@@ -224,6 +242,9 @@ package C3.Camera
 		private var m_pos : Vector3D = new Vector3D(0,0,0);
 		private var m_type : uint;
 		private var m_target : TeapotMesh;
+		
+		//替换的相机矩阵
+		private var m_replaceMatrix : Matrix3D;
 		
 		public static const LANDOBJECT : uint = 0;
 		public static const AIRCRAFT : uint = 1;

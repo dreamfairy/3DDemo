@@ -11,6 +11,7 @@ package C3
 	
 	import C3.Material.IMaterial;
 	import C3.Mesh.MeshBase;
+	import C3.PostRender.IPostRender;
 	
 	public class Object3D extends MeshBase
 	{
@@ -18,6 +19,11 @@ package C3
 		{
 			super(mat);
 			m_name = name;
+		}
+		
+		public function set shadowMapping(item : IPostRender) : void
+		{
+			m_shadowMap = item;
 		}
 		
 		public function get indexRawData() : Vector.<uint>
@@ -81,6 +87,61 @@ package C3
 		}
 		
 		/**
+		 * 骨骼顶点
+		 */
+		public function set jointIndexRawData(data : Vector.<Number>) : void
+		{
+			m_jointIndexRawData = data;
+			
+			if(m_jointIndexBuffer){
+				m_jointIndexBuffer.dispose();
+				m_jointIndexBuffer = null;
+			}
+		}
+		
+		public function get jointIndexRawData() : Vector.<Number>
+		{
+			return m_jointIndexRawData;
+		}
+		
+		/**
+		 * 骨骼权重
+		 */
+		public function set jointWeightRawData(data : Vector.<Number>) : void
+		{
+			m_jointWeightRawData = data;
+			
+			if(m_jointWeightBuffer){
+				m_jointWeightBuffer.dispose();
+				m_jointWeightBuffer = null;
+			}
+		}
+		
+		public function get jointWeightRawData() : Vector.<Number>
+		{
+			return m_jointWeightRawData;
+		}
+		
+		
+		public function get vertexBuffer() : VertexBuffer3D
+		{
+			checkBuffer();
+			return m_vertexBuffer;
+		}
+		
+		public function get uvBuffer() : VertexBuffer3D
+		{
+			checkBuffer();
+			return m_uvBuffer;
+		}
+		
+		public function get indexBuffer() : IndexBuffer3D
+		{
+			checkBuffer();
+			return m_indexBuffer;
+		}
+		
+		/**
 		 * 如果buffer 没有创建，则创建一次
 		 */
 		private function checkBuffer() : void
@@ -128,11 +189,10 @@ package C3
 			
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_transform);
-			m_finalMatrix.append(View.camera.getViewMatrix());
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				m_finalMatrix.append(parent.transform);
+				parent.appendChildMatrix(m_finalMatrix);
 				parent = parent.parent;
 			}
 			
@@ -141,7 +201,14 @@ package C3
 				createProgram();
 			
 			View.context.setProgram(m_program);
-			View.context.setTextureAt(0,m_material.getTexture());
+			
+			/**
+			 * 如果有阴影图，且阴影图未绘制完毕，则不需要创建自己的纹理
+			 * 如果没有阴影图，或者阴影图绘制完毕，绘制自己的纹理
+			 */
+			if(!m_shadowMap || m_shadowMap.hasPassDoen)
+				View.context.setTextureAt(0,m_material.getTexture());
+			
 			View.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
 			
 			View.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
@@ -150,7 +217,7 @@ package C3
 			View.context.setVertexBufferAt(1,m_uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
 			
 			if(m_normalBuffer)
-				View.context.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
+//				View.context.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			
 			View.context.drawTriangles(m_indexBuffer,0,m_numTriangles);
 			
@@ -162,7 +229,7 @@ package C3
 		 * v0 为 uv
 		 * 从材质获取FragmentStr
 		 */
-		private function createProgram() : void
+		protected function createProgram() : void
 		{
 			var vertexProgram : AGALMiniAssembler = new AGALMiniAssembler();
 			vertexProgram.assemble(Context3DProgramType.VERTEX,
@@ -171,7 +238,7 @@ package C3
 			
 			var fragementProgram : AGALMiniAssembler = new AGALMiniAssembler();
 			fragementProgram.assemble(Context3DProgramType.FRAGMENT,
-				m_material.getFragmentStr());
+				m_material.getFragmentStr(m_shadowMap));
 			
 			m_program = View.context.createProgram();
 			m_program.upload(vertexProgram.agalcode,fragementProgram.agalcode);
@@ -211,15 +278,20 @@ package C3
 		protected var m_parent : Object3DContainer;
 		protected var m_numTriangles : uint;
 		protected var m_program : Program3D;
+		protected var m_shadowMap : IPostRender;
 		
 		protected var m_uvBuffer : VertexBuffer3D;
 		protected var m_vertexBuffer : VertexBuffer3D;
 		protected var m_indexBuffer : IndexBuffer3D;
 		protected var m_normalBuffer : VertexBuffer3D;
+		protected var m_jointIndexBuffer : VertexBuffer3D;
+		protected var m_jointWeightBuffer : VertexBuffer3D;
 		
 		protected var m_uvRawData : Vector.<Number>;
 		protected var m_vertexRawData : Vector.<Number>;
 		protected var m_indexRawData : Vector.<uint>;
 		protected var m_normalRawData : Vector.<Number>;
+		protected var m_jointIndexRawData : Vector.<Number>;
+		protected var m_jointWeightRawData : Vector.<Number>;
 	}
 }
