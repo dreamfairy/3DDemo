@@ -48,12 +48,12 @@
             params.allowfullscreen = "true";
             params.wmode="direct";
             var attributes = {};
-            attributes.id = "MD5Test";
-            attributes.name = "MD5Test";
+            attributes.id = "ShareTextureTest";
+            attributes.name = "ShareTextureTest";
             attributes.align = "middle";
             swfobject.embedSWF(
-                "MD5Test.swf", "flashContent", 
-                "1440", "800", 
+                "ShareTextureTest.swf", "flashContent", 
+                "512", "512", 
                 swfVersionStr, xiSwfUrlStr, 
                 flashvars, params, attributes);
             // JavaScript enabled so display the flashContent div in case it is not replaced with a swf object.
@@ -78,14 +78,14 @@
         </div>
         
         <noscript>
-            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="1440" height="800" id="MD5Test">
-                <param name="movie" value="MD5Test.swf" />
+            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="512" height="512" id="ShareTextureTest">
+                <param name="movie" value="ShareTextureTest.swf" />
                 <param name="quality" value="high" />
                 <param name="bgcolor" value="#ffffff" />
                 <param name="allowScriptAccess" value="sameDomain" />
                 <param name="allowFullScreen" value="true" />
                 <!--[if !IE]>-->
-                <object type="application/x-shockwave-flash" data="MD5Test.swf" width="1440" height="800">
+                <object type="application/x-shockwave-flash" data="ShareTextureTest.swf" width="512" height="512">
                     <param name="quality" value="high" />
                     <param name="bgcolor" value="#ffffff" />
                     <param name="allowScriptAccess" value="sameDomain" />

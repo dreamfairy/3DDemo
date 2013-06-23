@@ -48,12 +48,12 @@
             params.allowfullscreen = "true";
             params.wmode="direct";
             var attributes = {};
-            attributes.id = "MD5Test";
-            attributes.name = "MD5Test";
+            attributes.id = "StencilTest";
+            attributes.name = "StencilTest";
             attributes.align = "middle";
             swfobject.embedSWF(
-                "MD5Test.swf", "flashContent", 
-                "1440", "800", 
+                "StencilTest.swf", "flashContent", 
+                "100%", "100%", 
                 swfVersionStr, xiSwfUrlStr, 
                 flashvars, params, attributes);
             // JavaScript enabled so display the flashContent div in case it is not replaced with a swf object.
@@ -78,14 +78,14 @@
         </div>
         
         <noscript>
-            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="1440" height="800" id="MD5Test">
-                <param name="movie" value="MD5Test.swf" />
+            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="100%" height="100%" id="StencilTest">
+                <param name="movie" value="StencilTest.swf" />
                 <param name="quality" value="high" />
                 <param name="bgcolor" value="#ffffff" />
                 <param name="allowScriptAccess" value="sameDomain" />
                 <param name="allowFullScreen" value="true" />
                 <!--[if !IE]>-->
-                <object type="application/x-shockwave-flash" data="MD5Test.swf" width="1440" height="800">
+                <object type="application/x-shockwave-flash" data="StencilTest.swf" width="100%" height="100%">
                     <param name="quality" value="high" />
                     <param name="bgcolor" value="#ffffff" />
                     <param name="allowScriptAccess" value="sameDomain" />
