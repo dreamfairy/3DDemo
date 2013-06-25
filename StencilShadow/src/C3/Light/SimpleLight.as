@@ -35,7 +35,10 @@ package C3.Light
 		
 		public function getAmbient() : Vector.<Number>
 		{
-			return m_ambient?m_ambient:Vector.<Number>([.1,.1,.1,0]);
+			if(null == m_ambient) 
+				m_ambient = Vector.<Number>([1,1,1,0]);
+			
+			return m_ambient;
 		}
 		
 		public function setColor(r : Number, g : Number, b: Number, a : Number) : void
