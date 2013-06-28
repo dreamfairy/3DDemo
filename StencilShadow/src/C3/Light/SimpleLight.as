@@ -41,6 +41,14 @@ package C3.Light
 			return m_ambient;
 		}
 		
+		public function getNegAmbient() : Vector.<Number>
+		{
+			if(null == m_ambient) 
+				m_ambient = Vector.<Number>([1,1,1,0]);
+			
+			return new Vector.<Number>([1 - m_ambient[0], 1- m_ambient[1], 1 - m_ambient[2], 1 - m_ambient[3]]);
+		}
+		
 		public function setColor(r : Number, g : Number, b: Number, a : Number) : void
 		{
 			m_color = Vector.<Number>([r,g,b,a]);

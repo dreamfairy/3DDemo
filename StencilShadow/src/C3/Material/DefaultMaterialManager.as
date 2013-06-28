@@ -1,6 +1,7 @@
 package C3.Material
 {
 	import flash.display.BitmapData;
+	import flash.display3D.Context3D;
 	import flash.display3D.textures.Texture;
 	
 	import C3.View;
@@ -10,15 +11,15 @@ package C3.Material
 		private static var m_defultTexture : Texture;
 		private static var m_defaultTextureBitmapData : BitmapData;
 		
-		public static function getDefaultTexture() : Texture
+		public static function getDefaultTexture(context : Context3D = null) : Texture
 		{
 			if(!m_defultTexture)
-				createDefaultTexture();
+				createDefaultTexture(context ? context : View.context);
 			
 			return m_defultTexture;
 		}
 		
-		private static function createDefaultTexture() : void
+		private static function createDefaultTexture(context : Context3D) : void
 		{
 			m_defaultTextureBitmapData = new BitmapData(8,8,false,0x0);
 			
@@ -30,7 +31,7 @@ package C3.Material
 				}
 			}
 			
-			m_defultTexture = Utils.getTextureByBmd(m_defaultTextureBitmapData, View.context);
+			m_defultTexture = Utils.getTextureByBmd(m_defaultTextureBitmapData, context);
 		}
 	}
 }
