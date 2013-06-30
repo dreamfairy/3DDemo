@@ -95,7 +95,7 @@ package C3
 			}
 			
 			m_context3D.setVertexBufferAt(1, m_uvBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
-//			m_context3D.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
+			m_context3D.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			m_context3D.setVertexBufferAt(0,m_vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			m_context3D.drawTriangles(m_indexBuffer,0,m_cubeIndex.length / 3);
 			

@@ -97,8 +97,8 @@ package
 			light.moveTo(lightDirection.x,lightDirection.y,lightDirection.z);
 			light.render(m_viewMatrix,m_projMatrix,null);
 			
-//			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX,1,Vector.<Number>([lightProp.x,lightProp.y,lightProp.z,1]));
-//			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX,Vector.<Number>([lightDirection.x,lightDirection.y,lightDirection.z,0]));
+			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX,1,Vector.<Number>([lightProp.x,lightProp.y,lightProp.z,1]));
+			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX,2,Vector.<Number>([lightDirection.x,lightDirection.y,lightDirection.z,0]));
 		}
 		
 		private function renderScene() : void

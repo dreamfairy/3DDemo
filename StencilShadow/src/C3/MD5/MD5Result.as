@@ -196,18 +196,24 @@ package C3.MD5
 			fragmentShader.assemble(Context3DProgramType.FRAGMENT,
 				//纹理采样
 				"tex ft0, v0, fs0<2d, linear, repeat>\n" +
+				//法线采样
 				"tex ft1, v0, fs1<2d, linear, repeat>\n" +
-				//灯光点乘法线
-				"dp3 ft2, ft1, fc2\n" +
-				"neg ft2, ft2\n" + 
-				"sat ft2, ft2\n"+
 				
+				//法线转换到世界空间
+				"m33 ft2.xyz ft1.xyz fc4\n"+
+				"nrm ft2.xyz ft2.xyz\n"+
+				//求法线和灯光的角度
+				"dp3 ft2.w ft2.xyz fc2.xyz\n"+
+				"neg ft2.w ft2.w\n"+
+				//取出大于0的部分
+				"max ft2.w ft2.w fc3.w\n"+
+				//diffuse = ft2.w * lightDiffuseColor;
+				"mul ft3.xyzw ft2.wwwww fc1.xyzw\n"+
 				//混合环境光
-				"mul ft3, ft0, ft2\n" +
-				//混合灯光颜色
-				"mul ft3, ft3, fc1\n" +
-				//输出
-				"add oc, ft3, fc0");
+				"mul ft4 ft0 fc0\n"+
+				//混合反射光
+				"mul ft3 ft0 ft3\n"+
+				"add oc ft3 ft4\n");
 			
 			program = context.createProgram();
 			program.upload(vertexShader.agalcode, fragmentShader.agalcode);

@@ -1,5 +1,9 @@
 package
 {
+	import C3.Light.SimpleLight;
+	import C3.MD5.MD5Result;
+	import C3.Material.DefaultMaterialManager;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
@@ -12,14 +16,14 @@ package
 	import flash.display3D.VertexBuffer3D;
 	import flash.display3D.textures.Texture;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
+	import flash.net.URLRequest;
+	import flash.net.navigateToURL;
+	import flash.text.TextField;
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
-	
-	import C3.Light.SimpleLight;
-	import C3.MD5.MD5Result;
-	import C3.Material.DefaultMaterialManager;
 
 	/**
 	 * 这次肯定能写出来了
@@ -42,10 +46,20 @@ package
 			
 			m_showQuad = createQuad("show")
 			m_floorQuad = createQuad("floor");
+			m_wallQuad = createQuad("wall");
 			m_defaultTexture = DefaultMaterialManager.getDefaultTexture(m_context);
 			addEventListener(Event.ENTER_FRAME, onEnter);
 			
-			m_light.pos = new Vector3D(10,25,0);
+			m_light.pos = new Vector3D(10,25,0);	
+			
+			var tf : TextField = new TextField();
+			tf.selectable = false;
+			tf.textColor = 0xFFFFFF;
+			tf.htmlText = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r方向键控制相机";
+			tf.width = tf.textWidth + 10;
+			tf.height = tf.textHeight + 10;
+			tf.x = stage.stageWidth - tf.width;
+			addChild(tf);
 		}
 		
 		/**
@@ -66,8 +80,10 @@ package
 			m_viewMatrix.appendTranslation(0,30,100);
 			m_viewMatrix.invert();
 			
+			m_modelPos = new Vector3D(0,-6,-20);
+			
 			//使用透视投影来模拟点光
-			m_lightProj.copyFrom(m_projMatrix);
+			m_lightProj.perspectiveFieldOfViewRH(45,stage.stageWidth/stage.stageHeight,m_zNear,m_zFar);
 			
 			//使用正交投影来模拟平行光
 //			m_lightProj.orthoRH(stage.stageWidth,stage.stageHeight,m_zNear,m_zFar);
@@ -119,9 +135,9 @@ package
 			
 			var depthPassFragmengShader : AGALMiniAssembler = new AGALMiniAssembler();
 			depthPassFragmengShader.assemble(Context3DProgramType.FRAGMENT,
-				"mov ft0.xyz, v0.zzz\n"+
-				"mov ft0.w fc0.y\n"+
-				"div ft0.xyz, ft0.xyz, fc0.x\n"+
+				"mov ft0.xyzw, v0.zzzz\n"+
+//				"mov ft0.w fc0.y\n"+
+				"div ft0.xyzw, ft0.xyzw, fc0.x\n"+
 				"mov oc ft0\n");
 			
 			m_shaderPassShader = m_context.createProgram();
@@ -147,7 +163,7 @@ package
 				"mov v3 va2\n"+
 				//worldPos
 				"mov v4 vt2\n"+
-				"mov op vt3\n");
+				"mov op vt0\n");
 			
 			var modelFragmentShader : AGALMiniAssembler = new AGALMiniAssembler();
 			modelFragmentShader.assemble(Context3DProgramType.FRAGMENT,
@@ -155,36 +171,35 @@ package
 				"tex ft1 v3 fs1<2d,wrap,nearst>\n"+
 				
 				//将坐标转换到其次坐标
-				"mov ft2 v1\n"+
-				"div ft2.x v1.x v1.w\n"+
-				"div ft2.y v1.y v1.w\n"+
+				"div ft2.xy v2.xy v2.ww\n"+
 				
 				//将坐标转换到纹理UV fc2.y = 0.5
 				// 0.5 * xy + 0.5;
-				"mul ft2.x ft2.x fc2.y\n"+
-				"mul ft2.y ft2.y fc2.y\n"+
-				"add ft2.x ft2.x fc2.y\n"+
-				"add ft2.y ft2.y fc2.y\n"+
 				
-				//y轴取反
-				"sub ft2.y fc2.z ft2.y\n"+
+				"mul ft2.xy ft2.xy fc2.y\n"+
+				"add ft2.xy ft2.xy fc2.y\n"+
+				
+				"neg ft2.y ft2.y\n"+
 				
 				//阴影图深度采样
 				"tex ft3 ft2.xy fs0<2d,wrap,nearst>\n"+
+//				"sub ft3 ft3 ft0\n"+
 				//距离和深度值进行比较
-				"sub ft5.x v4.x fc0.x\n"+
-				"sub ft5.y v4.y fc0.y\n"+
-				"sub ft5.z v4.z fc0.z\n"+
-				"mul ft5.x ft5.x ft5.x\n"+
-				"mul ft5.y ft5.y ft5.y\n"+
-				"mul ft5.z ft5.z ft5.z\n"+
-				"add ft5.w ft5.x ft5.y\n"+
-				"add ft5.w ft5.w ft5.z\n"+
-				"sqt ft5.w ft5.w\n"+
-				"mul ft5.w ft5.w fc2.w\n"+
-				"div ft5.w ft5.w fc2.x\n"+
+//				"sub ft5.x v2.x fc0.x\n"+
+//				"sub ft5.y v2.y fc0.y\n"+
+//				"sub ft5.z v2.z fc0.z\n"+
+//				"mul ft5.x ft5.x ft5.x\n"+
+//				"mul ft5.y ft5.y ft5.y\n"+
+//				"mul ft5.z ft5.z ft5.z\n"+
+//				"add ft5.w ft5.x ft5.y\n"+
+//				"add ft5.w ft5.w ft5.z\n"+
+//				"sqt ft5.w ft5.w\n"+
+//				"mul ft5.w ft5.w fc2.w\n"+
+//				"div ft5.w ft5.w fc2.x\n"+
 				
-				"slt ft5.w ft5.w ft3.z\n"+
+				"mul ft5.z ft3.z fc2.x\n"+
+				"mul ft5.z ft5.z fc2.w\n"+
+				"sge ft5.w ft5.z v2.z\n"+
 				"add ft5.w ft5.w fc2.y\n" +
 				"mul ft1 ft1 ft5.w\n"+
 				"mov oc ft1\n");
@@ -248,7 +263,7 @@ package
 		private function renderShadowMap() : void
 		{
 			//近的时候为0， 远的时候为1
-			m_context.clear(0,0,0,1,1,0,Context3DClearMask.COLOR | Context3DClearMask.DEPTH);
+			m_context.clear();
 
 			//使用正交投影模拟阳光渲染模型
 			
@@ -256,7 +271,7 @@ package
 			m_lightModel.appendRotation(-90,Vector3D.X_AXIS);
 			m_lightModel.appendRotation(t, Vector3D.Y_AXIS);
 			m_lightModel.appendScale(.1,.1,.1);
-			m_lightModel.appendTranslation(0,-6,-20);
+			m_lightModel.appendTranslation(m_modelPos.x,m_modelPos.y,m_modelPos.z);
 //			m_lightModel.appendTranslation(stage.stageWidth/2,stage.stageHeight/2 - 200,200);
 			
 			m_lightModelWorld.identity();
@@ -293,28 +308,39 @@ package
 				m_context.drawTriangles(indexBuffer);
 			}
 			
-			m_lightModel.identity();
-			m_lightModel.appendRotation(-90,Vector3D.X_AXIS);
-			m_lightModel.appendScale(10,10,10);
-			m_lightModel.appendTranslation(0,-6,m_orthoDepth);
-			
-			m_lightView.identity();
-			m_lightView.appendTranslation(10,20,-20);
-			m_lightView.pointAt(m_lightModel.position,CAM_FACING,CAM_UP);
-			m_lightView.invert();
-			
-			m_lightFloorFinal.identity();
-			m_lightFloorFinal.append(m_lightModel);
-			m_lightFloorFinal.append(m_lightView);
-			m_lightFloorFinal.append(m_lightProj);
-			
-			m_context.setProgram(m_shaderPassShader);
-			m_context.setVertexBufferAt(0,m_floorQuad.vertexBuffer,0,"float3");
-			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_lightFloorFinal, true);
-			m_context.drawTriangles(m_floorQuad.indexBuffer);
+			//绘制floor
+			renderDepthQuad(m_floorQuad,m_modelPos,-90);
+			//绘制wall
+			renderDepthQuad(m_wallQuad,new Vector3D(0,0,-30),0);
 			
 			//输出到纹理
 			m_context.present();
+		}
+		
+		private function renderDepthQuad(target : QuadInfo, pos : Vector3D, xDegree : Number) : void
+		{
+			m_lightModel.identity();
+			m_lightModel.appendRotation(xDegree,Vector3D.X_AXIS);
+			m_lightModel.appendScale(10,10,10);
+			m_lightModel.appendTranslation(pos.x,pos.y,pos.z);
+			
+			m_lightModelWorld.identity();
+			m_lightModelWorld.append(m_lightModel);
+			m_lightModelWorld.append(m_worldMatrix);
+			
+			m_lightView.identity();
+			m_lightView.appendTranslation(m_light.pos.x,m_light.pos.y,-m_light.pos.z);
+			m_lightView.pointAt(m_lightModel.position,CAM_FACING,CAM_UP);
+			m_lightView.invert();
+			
+			m_lightModelFinal.identity();
+			m_lightModelFinal.append(m_lightModelWorld);
+			m_lightModelFinal.append(m_lightViewProj);
+			
+			m_context.setProgram(m_shaderPassShader);
+			m_context.setVertexBufferAt(0,m_floorQuad.vertexBuffer,0,"float3");
+			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_lightModelFinal, true);
+			m_context.drawTriangles(target.indexBuffer);
 		}
 		
 		private function renderModel() : void
@@ -327,10 +353,12 @@ package
 			m_modelMatrix.appendRotation(-90,Vector3D.X_AXIS);
 			m_modelMatrix.appendRotation(t, Vector3D.Y_AXIS);
 			m_modelMatrix.appendScale(.1,.1,.1);
-			m_modelMatrix.appendTranslation(0,-6,-20);
+			m_modelMatrix.appendTranslation(m_modelPos.x,m_modelPos.y,m_modelPos.z);
 			
 			m_viewMatrix.identity();
-			m_viewMatrix.invert();
+			m_viewMatrix.appendTranslation(m_viewPos.x,m_viewPos.y,m_viewPos.z);
+			m_viewMatrix.pointAt(new Vector3D(0,0,-20),CAM_FACING,CAM_UP);
+//			m_viewMatrix.invert();
 			
 			m_sceneViewProj.identity();
 			m_sceneViewProj.append(m_viewMatrix);
@@ -385,29 +413,39 @@ package
 				m_context.drawTriangles(indexBuffer);
 			}
 			
+			//绘制quadFloor
+			renderQuad(m_floorQuad,m_modelPos, -90);
+			//绘制quadWall
+			renderQuad(m_wallQuad,new Vector3D(0,0,-30),0);
+			
 			m_context.setTextureAt(0, null);
 			m_context.setTextureAt(1, null);
 			m_context.setTextureAt(2, null);
-			
 			m_context.setVertexBufferAt(0, null);
 			m_context.setVertexBufferAt(1, null);
 			m_context.setVertexBufferAt(2, null);
 			m_context.setVertexBufferAt(3, null);
-			
-			m_floorQuad.transform.identity();
-			m_floorQuad.transform.appendRotation(-90,Vector3D.X_AXIS);
-			m_floorQuad.transform.appendScale(10,10,10);
-			m_floorQuad.transform.appendTranslation(0,-6,-20);
+		}
+		
+		private function renderQuad(target: QuadInfo, pos : Vector3D, xDegree : Number) : void
+		{
+			//绘制floor
+			target.transform.identity();
+			target.transform.appendRotation(xDegree,Vector3D.X_AXIS);
+			target.transform.appendScale(10,10,10);
+			target.transform.appendTranslation(pos.x,pos.y,pos.z);
 			
 			m_viewMatrix.identity();
-			m_viewMatrix.invert();
+			m_viewMatrix.appendTranslation(m_viewPos.x,m_viewPos.y,m_viewPos.z);
+			m_viewMatrix.pointAt(new Vector3D(0,0,-20),CAM_FACING,CAM_UP);
+//			m_viewMatrix.invert();
 			
 			m_sceneViewProj.identity();
 			m_sceneViewProj.append(m_viewMatrix);
 			m_sceneViewProj.append(m_projMatrix);
 			
 			m_modelToWorld.identity();
-			m_modelToWorld.append(m_floorQuad.transform);
+			m_modelToWorld.append(target.transform);
 			m_modelToWorld.append(m_worldMatrix);
 			
 			m_finalMatrix.identity();
@@ -427,28 +465,32 @@ package
 			m_emptyMatrix.identity();
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 24, m_emptyMatrix, true);
 			
-			m_context.setVertexBufferAt(0,m_floorQuad.vertexBuffer,0,"float3");
-			m_context.setVertexBufferAt(2,m_floorQuad.uvBuffer,0,"float2");
-			m_context.drawTriangles(m_floorQuad.indexBuffer);
-			
-			m_context.setTextureAt(0, null);
-			m_context.setTextureAt(1, null);
-			m_context.setTextureAt(2, null);
-			m_context.setVertexBufferAt(0, null);
-			m_context.setVertexBufferAt(1, null);
-			m_context.setVertexBufferAt(2, null);
-			m_context.setVertexBufferAt(3, null);
+			m_context.setVertexBufferAt(0,target.vertexBuffer,0,"float3");
+			m_context.setVertexBufferAt(2,target.uvBuffer,0,"float2");
+			m_context.drawTriangles(target.indexBuffer);
 		}
 		
 		protected override function renderKeyBoard():void
 		{
 			if(m_key[Keyboard.UP])
-				m_shadowEpsilon+=0.005;
+				m_viewPos.z -=.1;
 			
 			if(m_key[Keyboard.DOWN])
-				m_shadowEpsilon-=0.005;
+				m_viewPos.z +=.1;
 			
-			trace(m_shadowEpsilon);
+			if(m_key[Keyboard.LEFT])
+				m_viewPos.x -=.1;
+			
+			if(m_key[Keyboard.RIGHT])
+				m_viewPos.x +=.1;
+			
+//			if(m_key[Keyboard.A])
+//				m_shadowEpsilon+=0.01;
+//			
+//			if(m_key[Keyboard.D])
+//				m_shadowEpsilon-=0.01;
+			
+//			trace(m_shadowEpsilon);
 		}
 		
 		private function createQuad(name : String) : QuadInfo
@@ -532,6 +574,7 @@ package
 		private var m_defaultShader : Program3D;
 		private var m_showQuad : QuadInfo;
 		private var m_floorQuad : QuadInfo;
+		private var m_wallQuad : QuadInfo;
 		private var m_depthShader : Program3D;
 		private var m_defaultTexture : Texture;
 		
@@ -539,19 +582,22 @@ package
 		private var m_lightModelWorld : Matrix3D = new Matrix3D();
 		private var m_lightFloorFinal : Matrix3D = new Matrix3D();
 		
+		private var m_viewPos : Vector3D = new Vector3D();
+		private var m_modelPos : Vector3D = new Vector3D();
+		
 		//场景
 		private var m_sceneViewProj : Matrix3D = new Matrix3D();
 		private var m_modelToWorld : Matrix3D = new Matrix3D();
 		private var m_emptyMatrix : Matrix3D = new Matrix3D();
 		
 		//阴影图部分
-		private var m_shadowEpsilon : Number = 1;
-		private var m_shadowMapSize : int = 1024;
+		private var m_shadowEpsilon : Number = 1.09;
+		private var m_shadowMapSize : int = 128;
 		private var m_shadowMapDx : Number = 1.0 / m_shadowMapSize;
 		private var m_modelDepthShader : Program3D;
 		private var m_shaderPassShader : Program3D;
 		private var m_shaderMap : Texture;
-		private var m_shadowAlpha : Number = .4;
+		private var m_shadowAlpha : Number = .7;
 		
 		//灯光部分
 		private var m_lightModel : Matrix3D = new Matrix3D(); //灯光模型
