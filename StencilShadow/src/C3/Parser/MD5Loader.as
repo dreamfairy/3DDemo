@@ -13,7 +13,10 @@ package C3.Parser
 	import C3.Object3D;
 	import C3.Object3DContainer;
 	import C3.View;
+	import C3.Animator.Animator;
 	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Geoentity.AnimGeoentity;
+	import C3.Geoentity.MeshGeoentity;
 	import C3.MD5.MD5Joint;
 	import C3.MD5.MD5MeshParser;
 	import C3.MD5.MD5Vertex;
@@ -21,7 +24,7 @@ package C3.Parser
 	import C3.MD5.MeshData;
 	import C3.Material.IMaterial;
 
-	public class MD5Loader extends Object3DContainer
+	public class MD5Loader extends MeshGeoentity
 	{
 		public function MD5Loader(name : String, mat : IMaterial)
 		{
@@ -44,6 +47,8 @@ package C3.Parser
 		 */
 		private function onMeshLoaded(event:AOI3DLOADEREVENT) : void
 		{
+			m_useCPU = m_md5MeshParser.md5_joint.length * 4 > 128;
+			
 			var obj : Object3D = new Object3D(m_name,m_material);
 			var meshData : MeshData = event.mesh;
 			obj.uvRawData = meshData.getUv();
@@ -139,6 +144,8 @@ package C3.Parser
 			}
 			
 			View.context.setTextureAt(0,null);
+			
+			if(m_animator)m_animator.render();
 		}
 		
 		private function loadData(url : String) : void
@@ -152,7 +159,7 @@ package C3.Parser
 		
 		private function onLoadError(e:IOErrorEvent) : void
 		{
-			trace(e.text);
+			trace(e.text,this);
 		}
 		
 		private function onLoadData(e:Event) : void
@@ -160,7 +167,39 @@ package C3.Parser
 			m_md5MeshParser.load(m_loader.data);
 		}
 		
+		public function addAnimation(anim : AnimGeoentity) : void
+		{
+			if(null == m_animator){
+				m_animator = new Animator();
+				m_animator.bind(this);
+			}
+			
+			m_animator.addAnimation(anim);
+		}
+		
+		public override function get meshDatas() : Vector.<MeshData>
+		{
+			return m_md5MeshParser.md5_mesh;
+		}
+		
+		public override function get joints():Vector.<MD5Joint>
+		{
+			return m_md5MeshParser.md5_joint;
+		}
+		
+		public override function get useCPU():Boolean
+		{
+			return m_useCPU;
+		}
+		
+		public override function get maxJoints():uint
+		{
+			return m_md5MeshParser.maxJointCount;
+		}
+		
 		private var m_md5MeshParser : MD5MeshParser;
 		private var m_loader : URLLoader;
+		private var m_animator : Animator;
+		private var m_useCPU : Boolean;
 	}
 }

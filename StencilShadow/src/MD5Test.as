@@ -1,8 +1,5 @@
 package
 {
-	import C3.CubeMesh;
-	import C3.MD5.MD5Result;
-	
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
@@ -15,6 +12,9 @@ package
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
+	
+	import C3.CubeMesh;
+	import C3.MD5.MD5Result;
 
 	[SWF(width = "1440", height = "800", frameRate="30")]
 	public class MD5Test extends ContextBase
@@ -54,7 +54,7 @@ package
 			
 			m_lightDirection = new Matrix3D();
 			
-			m_ambientLight = Vector.<Number>([1,1,1,1]);
+			m_ambientLight = Vector.<Number>([.8,.8,.8,1]);
 			
 			var color : uint = 0xFF0000;
 			var r : Number = ((color & 0xFF0000) >> 16 )/256;
@@ -85,6 +85,8 @@ package
 			m_viewMatrix.identity();
 			m_viewMatrix.appendTranslation(0,30,100);
 			m_viewMatrix.invert();
+			
+			m_eyePos = m_viewMatrix.position;
 		}
 		
 		private var t : Number = 0;
@@ -109,27 +111,31 @@ package
 			m_modelToWorld.identity();
 			m_modelToWorld.append(m_modelMatrix);
 			m_modelToWorld.append(m_worldMatrix);
-			m_modelToWorld.append(m_viewMatrix);
 			
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_modelToWorld);
-//			m_finalMatrix.append(m_viewMatrix);
+			m_finalMatrix.append(m_viewMatrix);
 			m_finalMatrix.append(m_projMatrix);
 			
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
 			
 			var lightPos : Vector3D = m_light.position.clone();
 			lightPos.normalize();
-			lightPos.negate();
+//			lightPos.negate();
+			
+			var viewPos : Vector3D = m_eyePos.clone();
+			viewPos.normalize();
 			
 			m_context.setTextureAt(0, m_texture);
 			m_context.setTextureAt(1, m_normalTexture);
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([lightPos.x,lightPos.y,lightPos.z,1]));
 			
 			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, m_ambientLight);
 			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, m_lightColor);
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, Vector.<Number>([1,2,0,0]));
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 2, Vector.<Number>([lightPos.x,lightPos.y,lightPos.z,1]));
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 3, Vector.<Number>([1,2,0.5,0]));
 			m_context.setProgramConstantsFromMatrix(Context3DProgramType.FRAGMENT, 4, m_modelToWorld);
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 5, Vector.<Number>([0,0,0,0])); //模型坐标
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 6, Vector.<Number>([viewPos.x,viewPos.y,viewPos.z,1]));
 			
 			for(var i : int = 0; i < md5Result.meshDataNum; i++){
 				var vertexBuffer : VertexBuffer3D = md5Result.vertexBufferList[i];
@@ -237,6 +243,7 @@ package
 		private var m_currentFrame : int;
 		private var m_modelMatrix : Matrix3D = new Matrix3D();
 		private var m_modelToWorld : Matrix3D = new Matrix3D();
+		private var m_eyePos : Vector3D;
 		
 		private var m_headTexture : Texture;
 		private var m_equipTexture : Texture;

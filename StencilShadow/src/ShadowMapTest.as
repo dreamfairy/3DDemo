@@ -49,10 +49,6 @@ package
 			
 			m_view.scene.addChild(m_container);
 			
-//			var light : SimpleLight = new SimpleLight(0xFF0000,1);
-//			var shadowMap : ShadowMap = new ShadowMap(light);
-//			m_view.addPostItem(shadowMap);
-			
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
 			this.addEventListener(Event.ENTER_FRAME, onEnter);

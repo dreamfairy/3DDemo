@@ -1,5 +1,6 @@
 package C3.Mesh
 {
+	import flash.events.EventDispatcher;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	
@@ -8,7 +9,7 @@ package C3.Mesh
 	import C3.Material.ColorMaterial;
 	import C3.Material.IMaterial;
 
-	public class MeshBase implements IMesh, IDispose
+	public class MeshBase extends EventDispatcher implements IMesh, IDispose
 	{
 		public function MeshBase(mat : IMaterial)
 		{

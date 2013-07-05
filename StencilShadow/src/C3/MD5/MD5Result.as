@@ -10,6 +10,7 @@ package C3.MD5
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Matrix3D;
+	import flash.geom.Point;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 
@@ -198,22 +199,38 @@ package C3.MD5
 				"tex ft0, v0, fs0<2d, linear, repeat>\n" +
 				//法线采样
 				"tex ft1, v0, fs1<2d, linear, repeat>\n" +
+				//将发现转换到 [-1,1]区间  rgb --> 2(x) - 1
+				"sub ft1.xyz ft1.xyz fc3.z\n"+
+				"mul ft1.xyz ft1.xyz fc3.y\n"+
 				
-				//法线转换到世界空间
-				"m33 ft2.xyz ft1.xyz fc4\n"+
-				"nrm ft2.xyz ft2.xyz\n"+
-				//求法线和灯光的角度
-				"dp3 ft2.w ft2.xyz fc2.xyz\n"+
-				"neg ft2.w ft2.w\n"+
-				//取出大于0的部分
-				"max ft2.w ft2.w fc3.w\n"+
-				//diffuse = ft2.w * lightDiffuseColor;
-				"mul ft3.xyzw ft2.wwwww fc1.xyzw\n"+
-				//混合环境光
-				"mul ft4 ft0 fc0\n"+
-				//混合反射光
-				"mul ft3 ft0 ft3\n"+
-				"add oc ft3 ft4\n");
+				//灯光角度
+				"mov ft2.xyz fc2.xyz\n"+
+				//相机角度
+				"mov ft3.xyz fc6.xyz\n"+
+				
+				"add ft4.xyz ft2.xyz ft3.xyz\n"+
+				"nrm ft4.xyz ft4.xyz\n"+
+				
+				"dp3 ft5.xyz ft1.xyz ft2.xyz\n"+
+				"sat ft5.xyz ft5.xyz\n"+
+				
+				"mul ft0.xyz ft0.xyz ft5.xyz\n"+
+				"mov oc ft0\n");
+//				//法线转换到世界空间
+//				"m33 ft2.xyz ft1.xyz fc4\n"+
+////				"nrm ft2.xyz ft2.xyz\n"+
+//				//求法线和灯光的角度
+//				"dp3 ft2.w ft2.xyz fc2.xyz\n"+
+//				"neg ft2.w ft2.w\n"+
+//				//取出大于0的部分
+//				"max ft2.w ft2.w fc3.w\n"+
+//				//diffuse = ft2.w * lightDiffuseColor;
+//				"mul ft3.xyzw ft2.wwwww fc1.xyzw\n"+
+//				//混合环境光
+//				"mul ft4 ft0 fc0\n"+
+//				//混合反射光
+//				"mul ft3 ft0 ft3\n"+
+//				"add oc ft3 ft4\n");
 			
 			program = context.createProgram();
 			program.upload(vertexShader.agalcode, fragmentShader.agalcode);
@@ -300,6 +317,67 @@ package C3.MD5
 			
 			cpuAnimVertexBuffer ||= context.createVertexBuffer(cpuAnimVertexRawData.length/3,3);
 			cpuAnimVertexBuffer.uploadFromVector(cpuAnimVertexRawData,0,cpuAnimVertexRawData.length/3);
+		}
+		
+		/**
+		 * 计算顶点的正切值
+		 */
+		private function calcVertexTangent(meshIndex : int) : void
+		{
+			var meshData : MeshData = md5MeshParser.md5_mesh[meshIndex];
+			
+			var triangles : Vector.<MD5Triangle> = meshData.md5_triangle;
+			var triangleCount : uint = triangles.length;
+			var vertexs : Vector.<MD5Vertex> = meshData.md5_vertex;
+			var vertexsRawData : Vector.<Number> = meshData.vertexRawData;
+			
+			var tan1 : Vector.<Vector3D> = new Vector.<Vector3D>(meshData.num_verts * 2, true);
+			var tan2 : Vector.<Vector3D> = tan1 + meshData.num_verts;
+			
+			for(var a : int = 0; a < triangleCount; a++)
+			{
+				var i1 : int = triangles[0];
+				var i2 : int = triangles[1];
+				var i3 : int = triangles[2];
+				
+				var v1 : Vector3D = new Vector3D(vertexsRawData[i1],vertexsRawData[i1+1],vertexsRawData[i1+2]);
+				var v2 : Vector3D = new Vector3D(vertexsRawData[i2],vertexsRawData[i2+1],vertexsRawData[i2+2]);
+				var v3 : Vector3D = new Vector3D(vertexsRawData[i3],vertexsRawData[i3+1],vertexsRawData[i3+2]);
+				
+				var w1 : Point = new Point(vertexs[i1].uv_x,vertexs[i1].uv_y);
+				var w2 : Point = new Point(vertexs[i2].uv_x,vertexs[i2].uv_y);
+				var w3 : Point = new Point(vertexs[i3].uv_x,vertexs[i3].uv_y);
+				
+				var x1 : Number = v2.x - v1.x;
+				var x2 : Number = v3.x - v1.x;
+				var y1 : Number = v2.y - v1.y;
+				var y2 : Number = v3.y - v1.y;
+				var z1 : Number = v2.z - v1.z;
+				var z2 : Number = v3.z - v1.z;
+				
+				var s1 : Number = w2.x - w1.x;
+				var s2 : Number = w3.x - w1.x;
+				var t1 : Number = w2.y - w1.y;
+				var t2 : Number = w3.y - w1.y;
+				
+				var r : Number = 1.0/(s1 * t2 - s2 * t1);
+				var sdir : Vector3D = new Vector3D(
+					(t2 * x1 - t1 * x2) * r,
+					(t2 * y1 - t1 * y2) * r,
+					(s1 * z2 - s2 * z1) * r);
+				var tdir : Vector3D = new Vector3D(
+					(s1 * x2 - s2 * x1) * r,
+					(s1 * y2 - s2 * y1) * r,
+					(s1 * z2 - s2 * z1) * r);
+				
+				tan1[i1] += sdir;
+				tan1[i2] += sdir;
+				tan1[i3] += sdir;
+				
+				tan2[i1] += tdir;
+				tan2[i2] += tdir;
+				tan2[i3] += tdir;
+			}
 		}
 		
 		public function clearCpuData() : void

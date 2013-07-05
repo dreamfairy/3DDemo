@@ -592,7 +592,7 @@ package
 		
 		//阴影图部分
 		private var m_shadowEpsilon : Number = 1.09;
-		private var m_shadowMapSize : int = 128;
+		private var m_shadowMapSize : int = 1024;
 		private var m_shadowMapDx : Number = 1.0 / m_shadowMapSize;
 		private var m_modelDepthShader : Program3D;
 		private var m_shaderPassShader : Program3D;

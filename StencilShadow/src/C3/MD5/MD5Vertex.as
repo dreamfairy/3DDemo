@@ -1,5 +1,7 @@
 package C3.MD5
 {
+	import flash.geom.Vector3D;
+
 	/**
 	 * MD5顶点
 	 */
@@ -12,5 +14,8 @@ package C3.MD5
 		/**权重数量**/
 		public var weight_count : Number = 0;
 		public var id : Number = 0;
+		
+		/**切线向量**/
+		public var tangent : Vector3D;
 	}
 }
