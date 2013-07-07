@@ -31,5 +31,15 @@ package C3.Geoentity
 		{
 			throw new Error("这货需要重写");
 		}
+		
+		public function updateMatrix() : void
+		{
+			throw new Error("这货需要重写");
+		}
+		
+		public function updateMaterial() : void
+		{
+			throw new Error("这货需要重写");
+		}
 	}
 }

@@ -1,5 +1,7 @@
 package C3.MD5
 {
+	import C3.Event.AOI3DLOADEREVENT;
+	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
@@ -68,6 +70,7 @@ package C3.MD5
 						break;
 				}
 				if(_reachedEOF){
+					this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.ON_ANIM_LOADED,null));
 					this.dispatchEvent(new Event(Event.COMPLETE));
 					return;
 				}

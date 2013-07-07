@@ -1,13 +1,13 @@
 package C3.Mesh
 {
-	import flash.events.EventDispatcher;
-	import flash.geom.Matrix3D;
-	import flash.geom.Vector3D;
-	
 	import C3.IDispose;
 	import C3.Light.SimpleLight;
 	import C3.Material.ColorMaterial;
 	import C3.Material.IMaterial;
+	
+	import flash.events.EventDispatcher;
+	import flash.geom.Matrix3D;
+	import flash.geom.Vector3D;
 
 	public class MeshBase extends EventDispatcher implements IMesh, IDispose
 	{
@@ -177,6 +177,11 @@ package C3.Mesh
 			m_transformDirty = false;
 		}
 		
+		public function get material() : IMaterial
+		{
+			return m_material;
+		}
+		
 		public function dispose():void
 		{
 			m_transform = null;
@@ -192,5 +197,7 @@ package C3.Mesh
 		protected var m_material : IMaterial;
 		protected var m_transformDirty : Boolean;
 		protected var m_light : SimpleLight;
+		
+		public var userData : Object;
 	}
 }

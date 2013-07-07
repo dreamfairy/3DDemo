@@ -1,9 +1,10 @@
 package C3
 {
-	import flash.geom.Matrix3D;
-	
 	import C3.Material.IMaterial;
 	import C3.PostRender.IPostRender;
+	
+	import flash.geom.Matrix3D;
+	import flash.geom.Vector3D;
 	
 	public class Object3DContainer extends Object3D
 	{
@@ -129,6 +130,11 @@ package C3
 			super.dispose();
 			m_modelList = null;
 			m_transform = null;
+		}
+		
+		public function get children() : Vector.<Object3D>
+		{
+			return m_modelList;
 		}
 		
 		private var m_view : View;

@@ -1,5 +1,9 @@
 package C3
 {
+	import C3.Material.IMaterial;
+	import C3.Mesh.MeshBase;
+	import C3.PostRender.IPostRender;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3DProgramType;
@@ -8,10 +12,6 @@ package C3
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix3D;
-	
-	import C3.Material.IMaterial;
-	import C3.Mesh.MeshBase;
-	import C3.PostRender.IPostRender;
 	
 	public class Object3D extends MeshBase
 	{
@@ -141,6 +141,18 @@ package C3
 			return m_indexBuffer;
 		}
 		
+		public function get jointIndexBuffer() : VertexBuffer3D
+		{
+			checkBuffer();
+			return m_jointIndexBuffer;
+		}
+		
+		public function get jointWeightBuffer() : VertexBuffer3D
+		{
+			checkBuffer();
+			return m_jointWeightBuffer;
+		}
+		
 		/**
 		 * 如果buffer 没有创建，则创建一次
 		 */
@@ -168,6 +180,18 @@ package C3
 			{
 				m_normalBuffer = View.context.createVertexBuffer(m_normalRawData.length/3,3);
 				m_normalBuffer.uploadFromVector(m_normalRawData,0,m_normalRawData.length/3);
+			}
+			
+			if(m_jointIndexRawData && !m_jointIndexBuffer)
+			{
+				m_jointIndexBuffer = View.context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
+				m_jointIndexBuffer.uploadFromVector(m_jointIndexRawData,0,m_jointIndexRawData.length/userData.maxJoints);
+			}
+			
+			if(m_jointWeightRawData && !m_jointWeightBuffer)
+			{
+				m_jointWeightBuffer = View.context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
+				m_jointWeightBuffer.uploadFromVector(m_jointWeightRawData,0,m_jointWeightRawData.length/userData.maxJoints);
 			}
 		}
 		

@@ -18,6 +18,11 @@ package C3.Geoentity
 			throw new Error("这货需要重写");
 		}
 		
+		public function get numFrams() : uint
+		{
+			throw new Error("这货需要重写");
+		}
+		
 		public function get baseFrameDatas() : Vector.<MD5BaseFrameData>
 		{
 			throw new Error("这货需要重写");

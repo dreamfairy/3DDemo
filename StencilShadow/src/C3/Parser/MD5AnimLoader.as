@@ -1,18 +1,18 @@
 package C3.Parser
 {
-	import flash.events.Event;
-	import flash.events.IOErrorEvent;
-	import flash.net.URLLoader;
-	import flash.net.URLLoaderDataFormat;
-	import flash.net.URLRequest;
-	import flash.utils.ByteArray;
-	
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.AnimGeoentity;
 	import C3.MD5.MD5AnimParser;
 	import C3.MD5.MD5BaseFrameData;
 	import C3.MD5.MD5FrameData;
 	import C3.MD5.MD5HierarchyData;
+	
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.utils.ByteArray;
 
 	public class MD5AnimLoader extends AnimGeoentity
 	{
@@ -73,6 +73,11 @@ package C3.Parser
 		public override function get hierarchies():Vector.<MD5HierarchyData>
 		{
 			return m_md5AnimParser.hierarchy;
+		}
+		
+		override public function get numFrams():uint
+		{
+			return m_md5AnimParser.numFrames;
 		}
 		
 		public override function dispose():void

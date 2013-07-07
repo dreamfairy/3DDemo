@@ -1,18 +1,5 @@
 package C3.Parser
 {
-	import flash.display3D.Context3DProgramType;
-	import flash.display3D.Context3DVertexBufferFormat;
-	import flash.events.Event;
-	import flash.events.IOErrorEvent;
-	import flash.geom.Vector3D;
-	import flash.net.URLLoader;
-	import flash.net.URLLoaderDataFormat;
-	import flash.net.URLRequest;
-	import flash.utils.ByteArray;
-	
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.View;
 	import C3.Animator.Animator;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.AnimGeoentity;
@@ -23,6 +10,19 @@ package C3.Parser
 	import C3.MD5.MD5Weight;
 	import C3.MD5.MeshData;
 	import C3.Material.IMaterial;
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	import C3.View;
+	
+	import flash.display3D.Context3DProgramType;
+	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.geom.Vector3D;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.utils.ByteArray;
 
 	public class MD5Loader extends MeshGeoentity
 	{
@@ -31,6 +31,7 @@ package C3.Parser
 			super(name, mat);
 			m_md5MeshParser = new MD5MeshParser();
 			m_md5MeshParser.addEventListener(AOI3DLOADEREVENT.ON_MESH_LOADED, onMeshLoaded);
+			m_md5MeshParser.addEventListener(Event.COMPLETE, onAllMeshLoaded);
 		}
 		
 		public function load(uri : *) : void
@@ -42,13 +43,18 @@ package C3.Parser
 			}
 		}
 		
+		private function onAllMeshLoaded(e:Event) : void
+		{
+			m_md5MeshParser.removeEventListener(AOI3DLOADEREVENT.ON_MESH_LOADED, onMeshLoaded);
+			m_md5MeshParser.removeEventListener(Event.COMPLETE, onAllMeshLoaded);
+			m_useCPU = m_md5MeshParser.md5_joint.length * 4 > 128;
+		}
+		
 		/**
 		 * 单个网格加载完毕
 		 */
 		private function onMeshLoaded(event:AOI3DLOADEREVENT) : void
 		{
-			m_useCPU = m_md5MeshParser.md5_joint.length * 4 > 128;
-			
 			var obj : Object3D = new Object3D(m_name,m_material);
 			var meshData : MeshData = event.mesh;
 			obj.uvRawData = meshData.getUv();
@@ -105,13 +111,14 @@ package C3.Parser
 			}
 			
 			obj.vertexRawData = vertexRawData;
+			obj.userData = {meshData : meshData, maxJoints : maxJointCount};
 			obj.jointIndexRawData = jointIndexRawData;
 			obj.jointWeightRawData = jointWeightRawData;
 			
 			addChild(obj);
 		}
 		
-		public override function render():void
+		override public function updateMatrix():void
 		{
 			if(m_transformDirty)
 				updateTransform();
@@ -126,14 +133,31 @@ package C3.Parser
 				parent = parent.parent;
 			}
 			
+			View.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
+		}
+		
+		override public function updateMaterial():void
+		{
+			View.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
+			View.context.setTextureAt(0,m_material.getTexture());
+		}
+		
+		public override function render():void
+		{
+			if(m_animator){
+				if(m_animator.render())
+					return;
+			}
+			
+			updateMatrix();
+			updateMaterial();
+			
 			//渲染材质
 			if(!m_program)
 				createProgram();
 			
 			View.context.setProgram(m_program);
-			View.context.setTextureAt(0,m_material.getTexture());
-			View.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
-			View.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
+			
 			
 			var obj : Object3D;
 			for each(obj in m_modelList)
@@ -144,8 +168,6 @@ package C3.Parser
 			}
 			
 			View.context.setTextureAt(0,null);
-			
-			if(m_animator)m_animator.render();
 		}
 		
 		private function loadData(url : String) : void
@@ -169,12 +191,17 @@ package C3.Parser
 		
 		public function addAnimation(anim : AnimGeoentity) : void
 		{
+			animator.addAnimation(anim);
+		}
+		
+		public function get animator() : Animator
+		{
 			if(null == m_animator){
 				m_animator = new Animator();
 				m_animator.bind(this);
 			}
 			
-			m_animator.addAnimation(anim);
+			return m_animator;
 		}
 		
 		public override function get meshDatas() : Vector.<MeshData>
