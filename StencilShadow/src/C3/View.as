@@ -10,6 +10,7 @@ package C3
 	import flash.geom.Rectangle;
 	
 	import C3.Camera.Camera;
+	import C3.Core.Managers.PickManager;
 	import C3.PostRender.IPostRender;
 	import C3.PostRender.ShadowMapping;
 
@@ -23,14 +24,16 @@ package C3
 			
 			camera = new Camera();
 			m_proj = new PerspectiveMatrix3D();
-			m_proj.perspectiveFieldOfViewRH(45, m_width/m_height,1,5000.0);
+			m_proj.perspectiveFieldOfViewRH(camera.fov, m_width/m_height,camera.zNear,camera.zFar);
 			m_worldMatrix = new Matrix3D();
 			m_finalMatrix = new Matrix3D();
 			m_postRenderList = new Vector.<IPostRender>();
 			
-			m_rootContainer = new Object3DContainer("root",null);
+			m_rootContainer = new Object3DContainer("scene",null);
 			m_rootContainer.isRoot = true;
 			m_rootContainer.view = this;
+			
+			m_pickManager = new PickManager(this);
 			
 			addEventListener(Event.ADDED_TO_STAGE, addedToStage);
 		}
@@ -43,7 +46,9 @@ package C3
 			stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, onCreateContext);
 			stage.stage3Ds[0].requestContext3D();
 			
+			
 			viewport = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
+			camera.parent = this;
 		}
 		
 		private function onCreateContext(e:Event) : void
@@ -53,6 +58,7 @@ package C3
 			context = (e.target as Stage3D).context3D;
 			context.configureBackBuffer(m_width,m_height,2,true);
 			context.enableErrorChecking = m_enableErrorCheck;
+			contextList[0] = context;
 			
 			setup();
 			
@@ -74,6 +80,7 @@ package C3
 			m_rootContainer.render();
 			postProcessing(false);
 			context.present();
+			m_pickManager.render();
 			onAfterRender();
 		}
 		
@@ -132,11 +139,18 @@ package C3
 			return m_rootContainer;
 		}
 		
+		public function get pickManager() : PickManager
+		{
+			return m_pickManager;
+		}
+		
 		public function dispose():void
 		{
 			m_rootContainer.dispose();
 			m_renderablle = false;
 		}
+		
+		private var m_pickManager : PickManager;
 		
 		private var m_width : int;
 		private var m_height : int;
@@ -149,6 +163,7 @@ package C3
 		private var m_worldMatrix : Matrix3D;
 		private var m_finalMatrix : Matrix3D;
 		
+		public static var contextList : Vector.<Context3D> = new Vector.<Context3D>(3,true);
 		public static var context : Context3D;
 		public static var camera : Camera;
 		public static var viewport : Rectangle;

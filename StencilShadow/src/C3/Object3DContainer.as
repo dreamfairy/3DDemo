@@ -1,10 +1,10 @@
 package C3
 {
-	import C3.Material.IMaterial;
-	import C3.PostRender.IPostRender;
-	
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
+	
+	import C3.Material.IMaterial;
+	import C3.PostRender.IPostRender;
 	
 	public class Object3DContainer extends Object3D
 	{
@@ -18,6 +18,11 @@ package C3
 		public function set isRoot(bool : Boolean) : void
 		{
 			m_isRoot = bool;
+		}
+		
+		public function get isRoot() : Boolean
+		{
+			return m_isRoot;
 		}
 		
 		public function set view(value : View) : void
@@ -46,6 +51,7 @@ package C3
 			if(m_modelList.indexOf(target) == -1){
 				m_modelList.push(target);
 				target.parent = this;
+				target.visible = true;
 			}	
 		}
 		
@@ -55,6 +61,7 @@ package C3
 			if(index != -1){
 				m_modelList.splice(index, 1);
 				target.parent = null;
+				target.visible = false;
 			}
 			
 			if(needDispose) target.dispose();
@@ -94,12 +101,15 @@ package C3
 		
 		public override function get transform():Matrix3D
 		{
-			if(m_isRoot) return m_view.projMatrix;
-			
 			if(m_transformDirty)
 				updateTransform();
 			
 			return m_transform;
+		}
+		
+		public function get projMatrix() : Matrix3D
+		{
+			return m_view.projMatrix;
 		}
 		
 		/**

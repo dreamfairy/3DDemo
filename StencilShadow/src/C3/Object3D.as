@@ -6,12 +6,14 @@ package C3
 	
 	import com.adobe.utils.AGALMiniAssembler;
 	
+	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix3D;
+	import flash.utils.Dictionary;
 	
 	public class Object3D extends MeshBase
 	{
@@ -122,6 +124,103 @@ package C3
 			return m_jointWeightRawData;
 		}
 		
+		/**
+		 * 多context3D 测试开始
+		 */
+		public function getVertexBufferByContext(context : Context3D) : VertexBuffer3D
+		{
+			if(null == m_vertexRawData) return null;
+			
+			if(!m_contextBufferCache.hasOwnProperty(context))
+				m_contextBufferCache[context] = [];
+			
+			if(m_contextBufferCache.hasOwnProperty(context) &&
+				m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX])
+				return m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX];
+			
+			var vertexBuffer : VertexBuffer3D = context.createVertexBuffer(m_vertexRawData.length/3,3);
+			vertexBuffer.uploadFromVector(m_vertexRawData,0,m_vertexRawData.length/3);
+			m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX] = vertexBuffer;
+			
+			return vertexBuffer;
+		}
+		
+		public function getUvBufferByContext(context : Context3D) : VertexBuffer3D
+		{
+			if(null == m_uvRawData) return null;
+			
+			if(!m_contextBufferCache.hasOwnProperty(context))
+				m_contextBufferCache[context] = [];
+			
+			if(m_contextBufferCache.hasOwnProperty(context) &&
+				m_contextBufferCache[context][AOI3DBUFFERTYPE.UV])
+				return m_contextBufferCache[context][AOI3DBUFFERTYPE.UV];
+			
+			var uvBuffer : VertexBuffer3D = context.createVertexBuffer(m_uvRawData.length/2,2)
+			uvBuffer.uploadFromVector(m_uvRawData,0,m_uvRawData.length/2);
+			m_contextBufferCache[context][AOI3DBUFFERTYPE.UV] = uvBuffer;
+			
+			return uvBuffer;
+		}
+		
+		public function getIndexBufferByContext(context : Context3D) : IndexBuffer3D
+		{
+			if(null == m_indexRawData) return null;
+			
+			if(!m_contextBufferCache.hasOwnProperty(context))
+				m_contextBufferCache[context] = [];
+			
+			if(m_contextBufferCache.hasOwnProperty(context) &&
+				m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX])
+				return m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX];
+			
+			var indexBuffer : IndexBuffer3D = context.createIndexBuffer(m_indexRawData.length);
+			indexBuffer.uploadFromVector(m_indexRawData,0,m_indexRawData.length);
+			m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX] = indexBuffer;
+			
+			return indexBuffer;
+		}
+		
+		public function getJointIndexBufferByContext(context : Context3D) : VertexBuffer3D
+		{
+			if(null == m_jointIndexRawData) return null;
+			
+			if(!m_contextBufferCache.hasOwnProperty(context))
+				m_contextBufferCache[context] = [];
+			
+			if(m_contextBufferCache.hasOwnProperty(context) &&
+				m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX])
+				return m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX];
+			
+			var jointIndexBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
+			jointIndexBuffer.uploadFromVector(m_jointIndexRawData,0,m_jointIndexRawData.length/userData.maxJoints);
+			m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX] = jointIndexBuffer;
+			
+			return jointIndexBuffer;
+		}
+		
+		public function getJointWeightBufferByContext(context : Context3D) : VertexBuffer3D
+		{
+			if(null == m_jointWeightRawData) return null;
+			
+			if(!m_contextBufferCache.hasOwnProperty(context))
+				m_contextBufferCache[context] = [];
+			
+			if(m_contextBufferCache.hasOwnProperty(context) &&
+				m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT])
+				return m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT];
+			
+			var jointWeightBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
+			jointWeightBuffer.uploadFromVector(m_jointWeightRawData,0,m_jointWeightRawData.length/userData.maxJoints);
+			m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT] = jointWeightBuffer;
+			
+			return jointWeightBuffer;
+		}
+		
+		/**
+		 * 多context3D 测试结束
+		 */
+		
 		
 		public function get vertexBuffer() : VertexBuffer3D
 		{
@@ -195,6 +294,22 @@ package C3
 			}
 		}
 		
+		public function get matrixGlobal() : Matrix3D
+		{
+			if(m_transformDirty)
+				updateTransform();
+			
+			m_matrixGlobal.identity();
+			m_matrixGlobal.append(m_transform);
+			var parent : Object3DContainer = m_parent;
+			while(null != parent && !parent.isRoot){
+				m_matrixGlobal.append(parent.transform);
+				parent = parent.parent;
+			}
+			
+			return m_matrixGlobal;
+		}
+		
 		/**
 		 * 模型矩阵放置在 124 末位
 		 * 顶点	vt0
@@ -216,7 +331,7 @@ package C3
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				parent.appendChildMatrix(m_finalMatrix);
+				parent.isRoot ? m_finalMatrix.append(parent.projMatrix) : parent.appendChildMatrix(m_finalMatrix);
 				parent = parent.parent;
 			}
 			
@@ -240,7 +355,7 @@ package C3
 			View.context.setVertexBufferAt(0, m_vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 			View.context.setVertexBufferAt(1,m_uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
 			
-			if(m_normalBuffer)
+//			if(m_normalBuffer)
 //				View.context.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			
 			View.context.drawTriangles(m_indexBuffer,0,m_numTriangles);
@@ -268,6 +383,11 @@ package C3
 			m_program.upload(vertexProgram.agalcode,fragementProgram.agalcode);
 		}
 		
+		public function get numTriangles() : uint
+		{
+			return m_numTriangles;
+		}
+		
 		public function get parent() : Object3DContainer
 		{
 			return m_parent;
@@ -292,9 +412,57 @@ package C3
 		{
 			super.dispose();
 			m_finalMatrix = null;
+			
+			for each(var key : String in m_contextBufferCache)
+			{
+				var arr : Array = m_contextBufferCache[key];
+				for each(var buffer : * in arr){
+					buffer.dispose();
+				}
+			}
+			m_contextBufferCache = null;
 		}
 		
+		public function set pickEnabled(bool : Boolean) : void
+		{
+			m_pickEnabled = bool
+		}
+		
+		public function get pickEnabled() : Boolean
+		{
+			return m_pickEnabled;
+		}
+		
+		public function set visible(bool : Boolean) : void
+		{
+			m_visible = bool;
+		}
+		
+		public function get visible() : Boolean
+		{
+			return m_visible;
+		}
+		
+		public function set interactive(bool : Boolean) : void
+		{
+			m_interactive = bool;
+		}
+		
+		public function get interactive() : Boolean
+		{
+			return m_interactive;
+		}
+		
+		/**
+		 * 缓存多个context创建的buffer
+		 */
+		protected var m_contextBufferCache : Dictionary = new Dictionary();
+		
+		protected var m_interactive : Boolean;
+		protected var m_visible : Boolean;
+		protected var m_pickEnabled : Boolean;
 		protected var m_finalMatrix : Matrix3D = new Matrix3D();
+		protected var m_matrixGlobal : Matrix3D = new Matrix3D();
 		
 		protected var m_name : String;
 		protected var m_width : int;

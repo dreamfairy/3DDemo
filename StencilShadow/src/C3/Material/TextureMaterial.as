@@ -7,7 +7,7 @@ package C3.Material
 
 	public class TextureMaterial implements IMaterial
 	{
-		public function TextureMaterial(texture : Class, smooth : Boolean = true, repeat : Boolean = false, mipmap : Boolean = true)
+		public function TextureMaterial(texture : Class, smooth : Boolean = true, repeat : Boolean = true, mipmap : Boolean = true)
 		{
 			m_textureClass = texture;
 			m_smooth = smooth;

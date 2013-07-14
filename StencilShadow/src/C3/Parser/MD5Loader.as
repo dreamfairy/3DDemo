@@ -129,7 +129,7 @@ package C3.Parser
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				m_finalMatrix.append(parent.transform);
+				parent.isRoot ? m_finalMatrix.append(parent.projMatrix) : m_finalMatrix.append(parent.transform);
 				parent = parent.parent;
 			}
 			

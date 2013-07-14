@@ -25,6 +25,7 @@ package
 		
 		protected var m_zFar : Number = 1000;
 		protected var m_zNear : Number = 1;
+		protected var m_fov : Number = 45 * (Math.PI/180);
 		
 		protected static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
 		protected static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
@@ -60,7 +61,7 @@ package
 			m_context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, true);
 			m_context.enableErrorChecking = true;
 			
-			m_projMatrix.perspectiveFieldOfViewRH(45 * (Math.PI/180), stage.stageWidth / stage.stageHeight, m_zNear, m_zFar);
+			m_projMatrix.perspectiveFieldOfViewRH(m_fov, stage.stageWidth / stage.stageHeight, m_zNear, m_zFar);
 		}
 		
 		protected function onMouseWheel(e:MouseEvent) : void

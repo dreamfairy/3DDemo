@@ -13,7 +13,8 @@ package C3.Mesh
 	{
 		public function MeshBase(mat : IMaterial)
 		{
-			this.material = mat ? mat : new ColorMaterial(0xFFFFFF,1);
+			if(null == mat) mat = new ColorMaterial(0xFFFFFF,1);
+			this.material = mat;
 		}
 		
 		public function set light(light:SimpleLight):void

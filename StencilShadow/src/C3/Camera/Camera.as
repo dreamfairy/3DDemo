@@ -1,15 +1,58 @@
 package C3.Camera
 {
+	import flash.display.Stage;
+	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	
 	import C3.TeapotMesh;
+	import C3.View;
 
 	public class Camera
 	{
 		public function Camera(isRH : Boolean = true)
 		{
 			m_isRH = isRH;
+		}
+		
+		public function set parent(target : View) : void
+		{
+			m_parent = target;
+			m_parent.stage.addEventListener(MouseEvent.CLICK, onClick);
+		}
+		
+		private function onClick(e:MouseEvent) : void
+		{
+			var p : Vector.<Number> = m_parent.projMatrix.rawData;
+			
+			//将屏幕坐标转换到设备坐标
+			var stage : Stage = e.target as Stage;
+			var vx : Number = (2*stage.mouseX/View.viewport.width - 1);
+			var vy : Number = (-2*stage.mouseY/View.viewport.height + 1);
+			
+			//创建拾取射线
+			var rayOrigin : Vector3D = new Vector3D();
+			var rayDir : Vector3D = new Vector3D();
+			getPickingRay(vx,vy,rayOrigin,rayDir);
+		}
+		
+		public function getPickingRay(xUnit : Number, yUnit : Number, intoOrigin : Vector3D, intoDir : Vector3D) : void
+		{
+			//射线原点为相机位置
+			intoOrigin.x = m_pos.x;
+			intoOrigin.y = m_pos.y;
+			intoOrigin.z = m_pos.z;
+			intoOrigin.w = 1;
+			
+			var aspect : Number = View.viewport.width/View.viewport.height;
+			var nearPlaneHeight : Number = zNear * Math.tan(fov);
+			var nearPlaneWidth : Number = nearPlaneHeight * aspect;
+			
+			var rightOffset : Number = xUnit * nearPlaneWidth;
+			var upOffset : Number = yUnit * nearPlaneHeight;
+			
+			//dir = viewDir * near + rightDir * rightOffset + readlUpDir * upOffset
+//			intoDir.x = m_look.x * zNear + 
 		}
 		
 		public function target(target : TeapotMesh) : void
@@ -228,6 +271,10 @@ package C3.Camera
 		public static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
 		public static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
 		
+		public var zNear : Number = 1;
+		public var zFar : Number = 5000;
+		public var fov : Number = 45;
+		
 		private var m_isRH : Boolean;
 		
 		private var m_tempVector : Vector3D = new Vector3D();
@@ -240,6 +287,7 @@ package C3.Camera
 		private var m_up : Vector3D = new Vector3D(0,1,0);
 		private var m_look : Vector3D = new Vector3D(0,0,1);
 		private var m_pos : Vector3D = new Vector3D(0,0,0);
+		private var m_parent : View;
 		private var m_type : uint;
 		private var m_target : TeapotMesh;
 		
