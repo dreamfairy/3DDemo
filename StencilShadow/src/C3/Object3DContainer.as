@@ -1,8 +1,9 @@
 package C3
 {
+	import flash.display3D.Context3D;
 	import flash.geom.Matrix3D;
-	import flash.geom.Vector3D;
 	
+	import C3.Camera.Camera;
 	import C3.Material.IMaterial;
 	import C3.PostRender.IPostRender;
 	
@@ -107,11 +108,6 @@ package C3
 			return m_transform;
 		}
 		
-		public function get projMatrix() : Matrix3D
-		{
-			return m_view.projMatrix;
-		}
-		
 		/**
 		 * 这里要特殊处理，把相机放在proj之前
 		 */
@@ -121,17 +117,20 @@ package C3
 				matrix.append(m_transform);
 			}
 			else{
-				matrix.append(View.camera.getViewMatrix());
-				matrix.append(m_view.projMatrix);
+				matrix.append(m_camera.getViewMatrix());
+				matrix.append(m_camera.projectMatrix);
 			}
 		}
 		
-		public override function render() : void
+		public override function render(context : Context3D, camera : Camera) : void
 		{
+			m_context = context;
+			m_camera = camera;
+			
 			var model : Object3D;
 			for each(model in m_modelList)
 			{
-				model.render();
+				model.render(m_context,m_camera);
 			}
 		}
 		

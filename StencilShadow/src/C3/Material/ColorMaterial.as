@@ -1,6 +1,8 @@
 package C3.Material
 {
+	import flash.display3D.Context3D;
 	import flash.display3D.textures.Texture;
+	import flash.display3D.textures.TextureBase;
 	
 	import C3.PostRender.IPostRender;
 
@@ -46,9 +48,9 @@ package C3.Material
 				"mov oc, ft0";
 		}
 		
-		public function getTexture():Texture
+		public function getTexture(context3D : Context3D) : TextureBase
 		{
-			m_texture ||= DefaultMaterialManager.getDefaultTexture();
+			m_texture ||= DefaultMaterialManager.getDefaultTexture(context3D);
 			return m_texture;
 		}
 		

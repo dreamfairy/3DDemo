@@ -1,11 +1,5 @@
 package C3.Core.Managers
 {
-	import C3.Material.Shaders.ShaderHitObject;
-	import C3.Mesh.IMesh;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.View;
-	
 	import flash.display.BitmapData;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
@@ -21,6 +15,13 @@ package C3.Core.Managers
 	import flash.geom.Rectangle;
 	import flash.ui.Mouse;
 	import flash.ui.MouseCursor;
+	
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	import C3.View;
+	import C3.Camera.Camera;
+	import C3.Material.Shaders.ShaderHitObject;
+	import C3.Mesh.IMesh;
 
 	public class PickRender
 	{
@@ -28,6 +29,7 @@ package C3.Core.Managers
 		 * 创建一个context 来绘制像素采集图
 		 */
 		private var m_context : Context3D;
+		
 		private var m_lastHit : Object3D;
 		private var m_initialzed : Boolean;
 		private var m_drawRect : Rectangle = new Rectangle(0,0,1,1);
@@ -88,7 +90,7 @@ package C3.Core.Managers
 			m_shader = new ShaderHitObject();
 		}
 		
-		public function render(view : View) : void
+		public function render(view : View, camera : Camera) : void
 		{
 			m_lastHit = null;
 			
@@ -133,10 +135,10 @@ package C3.Core.Managers
 			m_context.setColorMask(true,true,true,true);
 			m_context.setDepthTest(true, Context3DCompareMode.LESS);
 			//将鼠标所在的画笔偏移到0,0坐标系下
-			m_viewportData[2] = View.viewport.width;
-			m_viewportData[3] = View.viewport.height;
-			m_viewportData[0] = 1 - (m_mouseCoordX / View.viewport.width) * 2;
-			m_viewportData[1] = (m_mouseCoordY / View.viewport.height) * 2 - 1;
+			m_viewportData[2] = camera.viewport.width;
+			m_viewportData[3] = camera.viewport.height;
+			m_viewportData[0] = 1 - (m_mouseCoordX / camera.viewport.width) * 2;
+			m_viewportData[1] = (m_mouseCoordY / camera.viewport.height) * 2 - 1;
 			
 			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 4 , m_viewportData, 1);
 			
@@ -156,8 +158,8 @@ package C3.Core.Managers
 				
 				m_finalMatrix.identity();
 				m_finalMatrix.append(renderObject.matrixGlobal);
-				m_finalMatrix.append(View.camera.getViewMatrix());
-				m_finalMatrix.append(view.projMatrix);
+				m_finalMatrix.append(camera.getViewMatrix());
+				m_finalMatrix.append(camera.projectMatrix);
 				
 				m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_finalMatrix, true);
 				
@@ -202,7 +204,7 @@ package C3.Core.Managers
 				m_lastHit = null;
 			}
 			
-			if(m_lastHit)Mouse.cursor = MouseCursor.BUTTON;
+			if(m_lastHit && m_lastHit.buttonMode)Mouse.cursor = MouseCursor.BUTTON;
 			else Mouse.cursor = MouseCursor.AUTO;
 			
 			m_lastProgram = null;

@@ -1,18 +1,5 @@
 package C3.Animator
 {
-	import C3.Geoentity.AnimGeoentity;
-	import C3.Geoentity.MeshGeoentity;
-	import C3.IDispose;
-	import C3.MD5.MD5BaseFrameData;
-	import C3.MD5.MD5FrameData;
-	import C3.MD5.MD5HierarchyData;
-	import C3.MD5.MD5Joint;
-	import C3.MD5.MD5Result;
-	import C3.MD5.MeshData;
-	import C3.MD5.Quaternion;
-	import C3.Object3D;
-	import C3.View;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -23,6 +10,17 @@ package C3.Animator
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
+	
+	import C3.IDispose;
+	import C3.Object3D;
+	import C3.Geoentity.AnimGeoentity;
+	import C3.Geoentity.MeshGeoentity;
+	import C3.MD5.MD5BaseFrameData;
+	import C3.MD5.MD5FrameData;
+	import C3.MD5.MD5HierarchyData;
+	import C3.MD5.MD5Joint;
+	import C3.MD5.MeshData;
+	import C3.MD5.Quaternion;
 
 	public class Animator implements IDispose
 	{
@@ -131,10 +129,10 @@ package C3.Animator
 			return fragmentShader;
 		}
 		
-		public function render() : Boolean
+		public function render(context3D : Context3D) : Boolean
 		{
 			if(!m_needRender) return false;
-			m_context = View.context;
+			m_context = context3D;
 			if(!m_shader || m_needToUpdateAnimProgram)createShader();
 			
 			m_currentFrame = ++m_frame % m_totalFrame;

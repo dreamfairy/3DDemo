@@ -1,7 +1,5 @@
 package C3
 {
-	import com.adobe.utils.PerspectiveMatrix3D;
-	
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
@@ -11,8 +9,8 @@ package C3
 	
 	import C3.Camera.Camera;
 	import C3.Core.Managers.PickManager;
+	import C3.Mesh.SkyBox.SkyBoxBase;
 	import C3.PostRender.IPostRender;
-	import C3.PostRender.ShadowMapping;
 
 	public class View extends Sprite implements IDispose
 	{
@@ -22,11 +20,8 @@ package C3
 			m_height = height;
 			m_enableErrorCheck = enableErrorCheck;
 			
-			camera = new Camera();
-			m_proj = new PerspectiveMatrix3D();
-			m_proj.perspectiveFieldOfViewRH(camera.fov, m_width/m_height,camera.zNear,camera.zFar);
+			m_camera = new Camera();
 			m_worldMatrix = new Matrix3D();
-			m_finalMatrix = new Matrix3D();
 			m_postRenderList = new Vector.<IPostRender>();
 			
 			m_rootContainer = new Object3DContainer("scene",null);
@@ -47,18 +42,19 @@ package C3
 			stage.stage3Ds[0].requestContext3D();
 			
 			
-			viewport = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
-			camera.parent = this;
+			m_viewport = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
+			m_camera.viewport = m_viewport;
+			m_camera.parent = this;
 		}
 		
 		private function onCreateContext(e:Event) : void
 		{
 			m_renderablle = false;
 			
-			context = (e.target as Stage3D).context3D;
-			context.configureBackBuffer(m_width,m_height,2,true);
-			context.enableErrorChecking = m_enableErrorCheck;
-			contextList[0] = context;
+			m_context = (e.target as Stage3D).context3D;
+			m_context.configureBackBuffer(m_width,m_height,2,true);
+			m_context.enableErrorChecking = m_enableErrorCheck;
+			contextList[0] = m_context;
 			
 			setup();
 			
@@ -68,25 +64,25 @@ package C3
 		private var m_cube : CubeMesh;
 		private function setup() : void
 		{
-			m_cube = new CubeMesh(context);
+			m_cube = new CubeMesh(m_context);
 		}
 		
 		public function render() : void
 		{
 			if(!m_renderablle) return;
 			
-			context.clear();
+			m_context.clear();
 			postProcessing(true);
-			m_rootContainer.render();
+			m_rootContainer.render(m_context, m_camera);
 			postProcessing(false);
-			context.present();
-			m_pickManager.render();
+			m_context.present();
+			m_pickManager.render(m_camera);
 			onAfterRender();
 		}
 		
 		public function getCamera() : Camera
 		{
-			return camera;
+			return m_camera;
 		}
 		
 		private function onAfterRender() : void
@@ -109,10 +105,6 @@ package C3
 		{
 			if(m_postRenderList.indexOf(item) == -1)
 				m_postRenderList.push(item);
-			
-			//如果后期效果时一个阴影图，则需要通知模型更新此ShadowMapping,并改变其 fragment
-			if(item is ShadowMapping)
-				m_rootContainer.shadowMapping = item;
 		}
 		
 		public function removePostItem(item : IPostRender) : void
@@ -129,9 +121,25 @@ package C3
 			}
 		}
 		
-		public function get projMatrix() : Matrix3D
+		/**
+		 * 天空盒
+		 * 一个就够了
+		 */
+		public function set skyBox(value : SkyBoxBase) : void
 		{
-			return m_proj;
+			if(null != m_skyBox){
+				m_rootContainer.removeChild(m_skyBox);
+			}
+			
+			m_skyBox = value;
+			if(m_skyBox){
+				m_rootContainer.addChild(m_skyBox);
+			}
+		}
+		
+		public function get skyBox() : SkyBoxBase
+		{
+			return m_skyBox;
 		}
 		
 		public function get scene() : Object3DContainer
@@ -148,10 +156,14 @@ package C3
 		{
 			m_rootContainer.dispose();
 			m_renderablle = false;
+			m_skyBox = null;
 		}
 		
 		private var m_pickManager : PickManager;
 		
+		private var m_camera : Camera;
+		private var m_context : Context3D;
+		private var m_viewport : Rectangle;
 		private var m_width : int;
 		private var m_height : int;
 		private var m_enableErrorCheck : Boolean;
@@ -159,13 +171,9 @@ package C3
 		private var m_renderablle : Boolean;
 		private var m_postRenderList : Vector.<IPostRender>;
 		
-		private var m_proj : PerspectiveMatrix3D;
 		private var m_worldMatrix : Matrix3D;
-		private var m_finalMatrix : Matrix3D;
+		private var m_skyBox : SkyBoxBase;
 		
 		public static var contextList : Vector.<Context3D> = new Vector.<Context3D>(3,true);
-		public static var context : Context3D;
-		public static var camera : Camera;
-		public static var viewport : Rectangle;
 	}
 }

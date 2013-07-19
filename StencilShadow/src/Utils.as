@@ -4,9 +4,11 @@ package
 	import flash.display.BitmapData;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DTextureFormat;
+	import flash.display3D.textures.CubeTexture;
 	import flash.display3D.textures.Texture;
 	import flash.geom.Matrix;
 	import flash.geom.Matrix3D;
+	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
 
 	public class Utils
@@ -38,6 +40,36 @@ package
 			temp.dispose();
 			
 			return texture;
+		}
+		
+		public static function generateMipMapsCube(source : BitmapData, target : CubeTexture, side:uint, mipmap : BitmapData = null, alpha : Boolean = false) : void
+		{
+			var w : uint = source.width,
+				h : uint = source.height;
+			var i : uint;
+			var regen : Boolean = mipmap != null;
+			mipmap ||= new BitmapData(w, h, alpha);
+			
+			m_matrix.a = 1;
+			m_matrix.d = 1;
+			
+			m_rect.width = w;
+			m_rect.height = h;
+			
+			while (w >= 1 && h >= 1) {
+				if (alpha) mipmap.fillRect(m_rect, 0);
+				mipmap.draw(source, m_matrix, null, null, null, true);
+				target.uploadFromBitmapData(mipmap,side, i++);
+				w >>= 1;
+				h >>= 1;
+				m_matrix.a *= .5;
+				m_matrix.d *= .5;
+				m_rect.width = w;
+				m_rect.height = h;
+			}
+			
+			if (!regen)
+				mipmap.dispose();
 		}
 		
 		public static function getTextureByBmd(textureData : BitmapData, context3D : Context3D) : Texture
@@ -146,6 +178,9 @@ package
 		{
 			return a - (a * t) + (b * t);
 		}
+		
+		private static var m_matrix		: Matrix = new Matrix();
+		private static var m_rect			: Rectangle = new Rectangle();
 		
 		public static const WHITE			: uint = 0xffffffff;
 		public static const BLACK			: uint = 0xff000000;

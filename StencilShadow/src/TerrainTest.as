@@ -29,7 +29,7 @@ package
 	import flash.utils.Endian;
 	import flash.utils.getTimer;
 
-	[SWF(width = "640", height = "480", frameRate="60")]
+	[SWF(width = "1024", height = "768", frameRate="60")]
 	public class TerrainTest extends Sprite
 	{
 		public function TerrainTest()
@@ -128,7 +128,7 @@ package
 			var t:Number = getTimer();
 			m_mirrorMesh.setRotation( 0, 0, 0 );
 			m_mirrorMesh.rotation(Math.cos( t / 400 ) * 6, Vector3D.X_AXIS);
-			m_mirrorMesh.rotation( Math.cos( t / 300 ) * 6 + 90, Vector3D.Z_AXIS);
+			m_mirrorMesh.rotation( Math.cos( t / 300 ) * 6, Vector3D.Z_AXIS);
 			
 			var color:uint = waveBmp.getPixel( terrainSize * 0.5, terrainSize * 0.5 ) & 0xff;
 			var height:Number =  color / 255 * 15 - 10;
@@ -179,7 +179,6 @@ package
 			m_terrainMesh.moveTo(0,-10,0);
 			
 			m_mirrorMesh = new TeapotMesh(m_context);
-			m_mirrorMesh.rotation(90,Vector3D.Z_AXIS);
 			m_mirrorMesh.moveTo(0,30,0);
 			m_mirrorMesh.scale(10,10,10);
 			

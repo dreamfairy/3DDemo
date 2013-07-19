@@ -241,7 +241,7 @@ package
 			
 			m_edgeTeapot = new TeapotMesh(m_context);
 			m_edgeTeapot.moveTo(0,2,-5);
-			m_edgeTeapot.scale(1.1,1.1,1.1);
+//			m_edgeTeapot.scale(1.1,1.1,1.1);
 			
 			m_mirrorTeapot = new TeapotMesh(m_context);
 			

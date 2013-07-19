@@ -1,26 +1,81 @@
 package C3.Camera
 {
+	import com.adobe.utils.PerspectiveMatrix3D;
+	
 	import flash.display.Stage;
 	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
+	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
 	
+	import C3.IDispose;
 	import C3.TeapotMesh;
 	import C3.View;
 
-	public class Camera
+	public class Camera implements IDispose
 	{
 		public function Camera(isRH : Boolean = true)
 		{
 			m_isRH = isRH;
 		}
 		
+		public function set viewport(rect : Rectangle) : void
+		{
+			m_viewPort = rect;
+			updateProjMatrix();
+		}
+		
+		public function get viewport() : Rectangle
+		{
+			return m_viewPort;
+		}
+		
 		public function set parent(target : View) : void
 		{
 			m_parent = target;
-			m_parent.stage.addEventListener(MouseEvent.CLICK, onClick);
+//			m_parent.stage.addEventListener(MouseEvent.CLICK, onClick);
 		}
 		
+		public function get fov() : Number
+		{
+			return m_fov;
+		}
+		
+		public function set fov(value : Number) : void
+		{
+			m_fov = value;
+			updateProjMatrix();
+		}
+		
+		public function get zNear() : Number
+		{
+			return m_zNear;
+		}
+		
+		public function set zNear(value : Number) : void
+		{
+			m_zNear = value;
+			updateProjMatrix();
+		}
+		
+		public function get zFar() : Number
+		{
+			return m_zFar;
+		}
+		
+		public function set zFar(value : Number) : void
+		{
+			m_zFar = value;
+			updateProjMatrix();
+		}
+		
+		//更新投影矩阵
+		private function updateProjMatrix() : void
+		{
+			m_proj.perspectiveFieldOfViewRH(m_fov,m_viewPort.width/m_viewPort.height,m_zNear,m_zFar);
+		}
+		
+		/**
 		private function onClick(e:MouseEvent) : void
 		{
 			var p : Vector.<Number> = m_parent.projMatrix.rawData;
@@ -53,7 +108,7 @@ package C3.Camera
 			
 			//dir = viewDir * near + rightDir * rightOffset + readlUpDir * upOffset
 //			intoDir.x = m_look.x * zNear + 
-		}
+		}**/
 		
 		public function target(target : TeapotMesh) : void
 		{
@@ -268,12 +323,18 @@ package C3.Camera
 			return m_look;
 		}
 		
+		public function get projectMatrix() : Matrix3D
+		{
+			return m_proj;
+		}
+		
+		public function dispose():void
+		{
+			//以后再说
+		}
+		
 		public static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
 		public static const CAM_UP:Vector3D = new Vector3D(0, -1, 0);
-		
-		public var zNear : Number = 1;
-		public var zFar : Number = 5000;
-		public var fov : Number = 45;
 		
 		private var m_isRH : Boolean;
 		
@@ -291,8 +352,19 @@ package C3.Camera
 		private var m_type : uint;
 		private var m_target : TeapotMesh;
 		
+		//投影矩阵
+		private var m_proj : PerspectiveMatrix3D = new PerspectiveMatrix3D();
+		
+		//视图区域
+		private var m_viewPort : Rectangle;
+		private var m_zNear : Number = 1;
+		private var m_zFar : Number = 5000;
+		private var m_fov : Number = 45;
+		
 		//替换的相机矩阵
 		private var m_replaceMatrix : Matrix3D;
+		
+		public static var TEMP_FINAL_MATRIX : Matrix3D = new Matrix3D();
 		
 		public static const LANDOBJECT : uint = 0;
 		public static const AIRCRAFT : uint = 1;

@@ -1,0 +1,12 @@
+# Blender MTL File: 'None'
+# Material Count: 1
+
+newmtl pet_panda_mat
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.470588 0.470588 0.470588
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.000000
+illum 0
+map_Kd f:\touchlight\torchlight.2.chs.cht.green.edition-ali213\torchlight 2\media\models\pets\panda\pet_panda.dds

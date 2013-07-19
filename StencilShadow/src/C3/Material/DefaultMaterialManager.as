@@ -3,18 +3,16 @@ package C3.Material
 	import flash.display.BitmapData;
 	import flash.display3D.Context3D;
 	import flash.display3D.textures.Texture;
-	
-	import C3.View;
 
 	public class DefaultMaterialManager
 	{
 		private static var m_defultTexture : Texture;
 		private static var m_defaultTextureBitmapData : BitmapData;
 		
-		public static function getDefaultTexture(context : Context3D = null) : Texture
+		public static function getDefaultTexture(context : Context3D) : Texture
 		{
 			if(!m_defultTexture)
-				createDefaultTexture(context ? context : View.context);
+				createDefaultTexture(context);
 			
 			return m_defultTexture;
 		}

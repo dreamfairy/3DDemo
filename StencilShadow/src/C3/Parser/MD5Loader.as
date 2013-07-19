@@ -1,19 +1,6 @@
 package C3.Parser
 {
-	import C3.Animator.Animator;
-	import C3.Event.AOI3DLOADEREVENT;
-	import C3.Geoentity.AnimGeoentity;
-	import C3.Geoentity.MeshGeoentity;
-	import C3.MD5.MD5Joint;
-	import C3.MD5.MD5MeshParser;
-	import C3.MD5.MD5Vertex;
-	import C3.MD5.MD5Weight;
-	import C3.MD5.MeshData;
-	import C3.Material.IMaterial;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.View;
-	
+	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.events.Event;
@@ -23,6 +10,20 @@ package C3.Parser
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	import C3.Animator.Animator;
+	import C3.Camera.Camera;
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Geoentity.AnimGeoentity;
+	import C3.Geoentity.MeshGeoentity;
+	import C3.MD5.MD5Joint;
+	import C3.MD5.MD5MeshParser;
+	import C3.MD5.MD5Vertex;
+	import C3.MD5.MD5Weight;
+	import C3.MD5.MeshData;
+	import C3.Material.IMaterial;
 
 	public class MD5Loader extends MeshGeoentity
 	{
@@ -123,29 +124,32 @@ package C3.Parser
 			if(m_transformDirty)
 				updateTransform();
 			
-			m_finalMatrix.identity();
-			m_finalMatrix.append(m_transform);
-			m_finalMatrix.append(View.camera.getViewMatrix());
+			Camera.TEMP_FINAL_MATRIX.identity();
+			Camera.TEMP_FINAL_MATRIX.append(m_transform);
+			Camera.TEMP_FINAL_MATRIX.append(m_camera.getViewMatrix());
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				parent.isRoot ? m_finalMatrix.append(parent.projMatrix) : m_finalMatrix.append(parent.transform);
+				parent.isRoot ? Camera.TEMP_FINAL_MATRIX.append(m_camera.projectMatrix) : Camera.TEMP_FINAL_MATRIX.append(parent.transform);
 				parent = parent.parent;
 			}
 			
-			View.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
+			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, Camera.TEMP_FINAL_MATRIX, true);
 		}
 		
 		override public function updateMaterial():void
 		{
-			View.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
-			View.context.setTextureAt(0,m_material.getTexture());
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
+			m_context.setTextureAt(0,m_material.getTexture(m_context));
 		}
 		
-		public override function render():void
+		public override function render(context:Context3D, camera:Camera):void
 		{
+			m_context = context;
+			m_camera = camera;
+			
 			if(m_animator){
-				if(m_animator.render())
+				if(m_animator.render(m_context))
 					return;
 			}
 			
@@ -154,20 +158,20 @@ package C3.Parser
 			
 			//渲染材质
 			if(!m_program)
-				createProgram();
+				createProgram(m_context);
 			
-			View.context.setProgram(m_program);
+			context.setProgram(m_program);
 			
 			
 			var obj : Object3D;
 			for each(obj in m_modelList)
 			{
-				View.context.setVertexBufferAt(0, obj.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-				View.context.setVertexBufferAt(1, obj.uvBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
-				View.context.drawTriangles(obj.indexBuffer);
+				context.setVertexBufferAt(0, obj.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+				context.setVertexBufferAt(1, obj.uvBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+				context.drawTriangles(obj.indexBuffer);
 			}
 			
-			View.context.setTextureAt(0,null);
+			context.setTextureAt(0,null);
 		}
 		
 		private function loadData(url : String) : void

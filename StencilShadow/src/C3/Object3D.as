@@ -1,9 +1,5 @@
 package C3
 {
-	import C3.Material.IMaterial;
-	import C3.Mesh.MeshBase;
-	import C3.PostRender.IPostRender;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -12,8 +8,17 @@ package C3
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
+	import flash.events.Event;
 	import flash.geom.Matrix3D;
 	import flash.utils.Dictionary;
+	
+	import C3.Camera.Camera;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Mesh.MeshBase;
+	import C3.PostRender.IPostRender;
+	
+	import org.osflash.signals.Signal;
 	
 	public class Object3D extends MeshBase
 	{
@@ -255,41 +260,43 @@ package C3
 		/**
 		 * 如果buffer 没有创建，则创建一次
 		 */
-		private function checkBuffer() : void
+		protected function checkBuffer() : void
 		{
+			if(null == m_context) return;
+			
 			if(m_indexRawData && !m_indexBuffer)
 			{
-				m_indexBuffer = View.context.createIndexBuffer(m_indexRawData.length);
+				m_indexBuffer = m_context.createIndexBuffer(m_indexRawData.length);
 				m_indexBuffer.uploadFromVector(m_indexRawData,0,m_indexRawData.length);
 			}
 			
 			if(m_vertexRawData && !m_vertexBuffer)
 			{
-				m_vertexBuffer = View.context.createVertexBuffer(m_vertexRawData.length/3,3);
+				m_vertexBuffer = m_context.createVertexBuffer(m_vertexRawData.length/3,3);
 				m_vertexBuffer.uploadFromVector(m_vertexRawData,0,m_vertexRawData.length/3);
 			}
 			
 			if(m_uvRawData && !m_uvBuffer)
 			{
-				m_uvBuffer = View.context.createVertexBuffer(m_uvRawData.length/2,2)
+				m_uvBuffer = m_context.createVertexBuffer(m_uvRawData.length/2,2)
 				m_uvBuffer.uploadFromVector(m_uvRawData,0,m_uvRawData.length/2);
 			}
 			
 			if(m_normalRawData && !m_normalBuffer)
 			{
-				m_normalBuffer = View.context.createVertexBuffer(m_normalRawData.length/3,3);
+				m_normalBuffer = m_context.createVertexBuffer(m_normalRawData.length/3,3);
 				m_normalBuffer.uploadFromVector(m_normalRawData,0,m_normalRawData.length/3);
 			}
 			
 			if(m_jointIndexRawData && !m_jointIndexBuffer)
 			{
-				m_jointIndexBuffer = View.context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
+				m_jointIndexBuffer = m_context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
 				m_jointIndexBuffer.uploadFromVector(m_jointIndexRawData,0,m_jointIndexRawData.length/userData.maxJoints);
 			}
 			
 			if(m_jointWeightRawData && !m_jointWeightBuffer)
 			{
-				m_jointWeightBuffer = View.context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
+				m_jointWeightBuffer = m_context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
 				m_jointWeightBuffer.uploadFromVector(m_jointWeightRawData,0,m_jointWeightRawData.length/userData.maxJoints);
 			}
 		}
@@ -319,48 +326,58 @@ package C3
 		 * 
 		 * fc0 材质提供的数据
 		 */
-		public function render() : void
+		public function render(context : Context3D, camera : Camera) : void
 		{
+			m_context = context;
+			m_camera = camera;
+			
 			checkBuffer();
 			
 			if(m_transformDirty)
 				updateTransform();
 			
+			m_finalMatrix.copyFrom(Camera.TEMP_FINAL_MATRIX);
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_transform);
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				parent.isRoot ? m_finalMatrix.append(parent.projMatrix) : parent.appendChildMatrix(m_finalMatrix);
+				parent.isRoot ? m_finalMatrix.append(camera.projectMatrix) : parent.appendChildMatrix(m_finalMatrix);
 				parent = parent.parent;
 			}
 			
+			m_shader.texture = m_material.getTexture(m_context);
+			m_shader.render(m_context);
+			
+			return;
 			//渲染材质
 			if(!m_program)
-				createProgram();
+				createProgram(m_context);
 			
-			View.context.setProgram(m_program);
+			m_context.setProgram(m_program);
 			
 			/**
 			 * 如果有阴影图，且阴影图未绘制完毕，则不需要创建自己的纹理
 			 * 如果没有阴影图，或者阴影图绘制完毕，绘制自己的纹理
 			 */
 			if(!m_shadowMap || m_shadowMap.hasPassDoen)
-				View.context.setTextureAt(0,m_material.getTexture());
+				m_context.setTextureAt(0,m_material.getTexture(m_context));
 			
-			View.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
 			
-			View.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
+			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
 			
-			View.context.setVertexBufferAt(0, m_vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-			View.context.setVertexBufferAt(1,m_uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
+			m_context.setVertexBufferAt(0, m_vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+			m_context.setVertexBufferAt(1,m_uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
 			
 //			if(m_normalBuffer)
 //				View.context.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			
-			View.context.drawTriangles(m_indexBuffer,0,m_numTriangles);
+			m_context.drawTriangles(m_indexBuffer,0,m_numTriangles);
 			
-			View.context.setTextureAt(0, null);
+			m_context.setTextureAt(0, null);
+			m_context.setVertexBufferAt(0, null);
+			m_context.setVertexBufferAt(1, null);
 		}
 		
 		/**
@@ -368,7 +385,7 @@ package C3
 		 * v0 为 uv
 		 * 从材质获取FragmentStr
 		 */
-		protected function createProgram() : void
+		protected function createProgram(context3D : Context3D) : void
 		{
 			var vertexProgram : AGALMiniAssembler = new AGALMiniAssembler();
 			vertexProgram.assemble(Context3DProgramType.VERTEX,
@@ -379,7 +396,7 @@ package C3
 			fragementProgram.assemble(Context3DProgramType.FRAGMENT,
 				m_material.getFragmentStr(m_shadowMap));
 			
-			m_program = View.context.createProgram();
+			m_program = context3D.createProgram();
 			m_program.upload(vertexProgram.agalcode,fragementProgram.agalcode);
 		}
 		
@@ -411,7 +428,17 @@ package C3
 		public override function dispose():void
 		{
 			super.dispose();
-			m_finalMatrix = null;
+			m_camera = null;
+			m_context = null;
+			
+			onMouseClick.removeAll();
+			onMouseClick = null;
+			onMouseUp.removeAll();
+			onMouseUp = null;
+			onMouseDown.removeAll();
+			onMouseDown = null;
+			onMouseMove.removeAll();
+			onMouseMove = null;
 			
 			for each(var key : String in m_contextBufferCache)
 			{
@@ -453,16 +480,32 @@ package C3
 			return m_interactive;
 		}
 		
+		public function set buttonMode(bool : Boolean) : void
+		{
+			m_buttonMode = bool
+		}
+		
+		public function get buttonMode() : Boolean
+		{
+			return m_buttonMode;
+		}
+		
+		public function get modelViewProjMatrix() : Matrix3D
+		{
+			return m_finalMatrix;
+		}
+		
 		/**
 		 * 缓存多个context创建的buffer
 		 */
 		protected var m_contextBufferCache : Dictionary = new Dictionary();
 		
+		protected var m_buttonMode : Boolean;
 		protected var m_interactive : Boolean;
 		protected var m_visible : Boolean;
 		protected var m_pickEnabled : Boolean;
-		protected var m_finalMatrix : Matrix3D = new Matrix3D();
 		protected var m_matrixGlobal : Matrix3D = new Matrix3D();
+		protected var m_finalMatrix : Matrix3D;
 		
 		protected var m_name : String;
 		protected var m_width : int;
@@ -485,5 +528,17 @@ package C3
 		protected var m_normalRawData : Vector.<Number>;
 		protected var m_jointIndexRawData : Vector.<Number>;
 		protected var m_jointWeightRawData : Vector.<Number>;
+		
+		protected var m_camera : Camera;
+		protected var m_context : Context3D;
+		protected var m_shader : Shader;
+		
+		/**
+		 * 鼠标事件
+		 */
+		public var onMouseClick : Signal = new Signal(Event);
+		public var onMouseUp : Signal = new Signal(Event);
+		public var onMouseDown : Signal = new Signal(Event);
+		public var onMouseMove : Signal = new Signal(Event);
 	}
 }

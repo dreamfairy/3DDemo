@@ -1,6 +1,8 @@
 package C3.Material
 {
+	import flash.display3D.Context3D;
 	import flash.display3D.textures.Texture;
+	import flash.display3D.textures.TextureBase;
 	
 	import C3.View;
 	import C3.PostRender.IPostRender;
@@ -35,12 +37,12 @@ package C3.Material
 			m_texture.dispose();
 		}
 		
-		public function getTexture():Texture
+		public function getTexture(context3D : Context3D) : TextureBase
 		{
 			if(m_textureClass)
-				m_texture = Utils.getTexture(m_textureClass, View.context);
+				m_texture = Utils.getTexture(m_textureClass, context3D);
 			
-			m_texture ||= DefaultMaterialManager.getDefaultTexture();
+			m_texture ||= DefaultMaterialManager.getDefaultTexture(context3D);
 			return m_texture;
 		}
 		
@@ -55,8 +57,6 @@ package C3.Material
 					"mov oc, ft0";
 				return;
 			}
-			
-			
 		}
 		
 		private var m_shadowMap : IPostRender;
