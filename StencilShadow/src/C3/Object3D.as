@@ -336,18 +336,15 @@ package C3
 			if(m_transformDirty)
 				updateTransform();
 			
-			m_finalMatrix.copyFrom(Camera.TEMP_FINAL_MATRIX);
 			m_finalMatrix.identity();
 			m_finalMatrix.append(m_transform);
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
-				parent.isRoot ? m_finalMatrix.append(camera.projectMatrix) : parent.appendChildMatrix(m_finalMatrix);
+				m_finalMatrix.append(parent.transform);
 				parent = parent.parent;
 			}
-			
-			m_shader.texture = m_material.getTexture(m_context);
-			m_shader.render(m_context);
+			m_finalMatrix.append(camera.viewProjMatrix);
 			
 			return;
 			//渲染材质
@@ -378,6 +375,11 @@ package C3
 			m_context.setTextureAt(0, null);
 			m_context.setVertexBufferAt(0, null);
 			m_context.setVertexBufferAt(1, null);
+		}
+		
+		public function get camera() : Camera
+		{
+			return m_camera;
 		}
 		
 		/**
@@ -505,7 +507,7 @@ package C3
 		protected var m_visible : Boolean;
 		protected var m_pickEnabled : Boolean;
 		protected var m_matrixGlobal : Matrix3D = new Matrix3D();
-		protected var m_finalMatrix : Matrix3D;
+		protected var m_finalMatrix : Matrix3D = new Matrix3D();
 		
 		protected var m_name : String;
 		protected var m_width : int;

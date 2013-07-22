@@ -23,6 +23,7 @@ package C3
 			m_camera = new Camera();
 			m_worldMatrix = new Matrix3D();
 			m_postRenderList = new Vector.<IPostRender>();
+			m_modelList = new Vector.<Object3D>();
 			
 			m_rootContainer = new Object3DContainer("scene",null);
 			m_rootContainer.isRoot = true;
@@ -101,6 +102,25 @@ package C3
 			}
 		}
 		
+		/**
+		 * 获取所有对象列表
+		 */
+		public function get modelList() : Vector.<Object3D>
+		{
+			m_modelList.splice(0,m_modelList.length);
+			getChildren(m_rootContainer, m_modelList);
+			
+			return m_modelList;
+		}
+		
+		private function getChildren(container : Object3DContainer, outList : Vector.<Object3D>) : void
+		{
+			for each(var child : Object3D in container.children){
+				if(child is Object3DContainer) getChildren(child as Object3DContainer, outList);
+				else outList.push(child);
+			}
+		}
+		
 		public function addPostItem(item : IPostRender) : void
 		{
 			if(m_postRenderList.indexOf(item) == -1)
@@ -157,6 +177,7 @@ package C3
 			m_rootContainer.dispose();
 			m_renderablle = false;
 			m_skyBox = null;
+			m_modelList = null;
 		}
 		
 		private var m_pickManager : PickManager;
@@ -170,6 +191,7 @@ package C3
 		private var m_rootContainer : Object3DContainer;
 		private var m_renderablle : Boolean;
 		private var m_postRenderList : Vector.<IPostRender>;
+		private var m_modelList : Vector.<Object3D>;
 		
 		private var m_worldMatrix : Matrix3D;
 		private var m_skyBox : SkyBoxBase;

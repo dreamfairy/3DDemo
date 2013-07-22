@@ -1,19 +1,20 @@
 package C3.Material.Shaders
 {
+	import flash.display.ShaderParameter;
 	import flash.display3D.Context3D;
 	import flash.display3D.Program3D;
-	import flash.display3D.textures.TextureBase;
 	import flash.utils.ByteArray;
 	
 	import C3.IDispose;
 	import C3.Object3D;
+	import C3.Material.IMaterial;
 
 	public class Shader implements IDispose
 	{
 		protected var m_params : ShaderParamters;
 		protected var m_program : Program3D;
 		protected var m_renderTarget : Object3D;
-		protected var m_texture : TextureBase;
+		protected var m_material : IMaterial;
 		
 		public function Shader(renderTarget : Object3D = null)
 		{
@@ -21,9 +22,14 @@ package C3.Material.Shaders
 			m_renderTarget = renderTarget;
 		}
 		
-		public function set texture(data : TextureBase) : void
+		public function get params() : ShaderParamters
 		{
-			m_texture = data;
+			return m_params;
+		}
+		
+		public function set material(data : IMaterial) : void
+		{
+			m_material = data;
 		}
 		
 		public function getProgram(context : Context3D) : Program3D

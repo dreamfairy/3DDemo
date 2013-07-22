@@ -39,7 +39,7 @@ package C3.Material
 		
 		public function getTexture(context3D : Context3D) : TextureBase
 		{
-			if(m_textureClass)
+			if(m_textureClass && !m_texture)
 				m_texture = Utils.getTexture(m_textureClass, context3D);
 			
 			m_texture ||= DefaultMaterialManager.getDefaultTexture(context3D);

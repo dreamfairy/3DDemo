@@ -11,6 +11,8 @@ package C3.Mesh.SkyBox
 	import C3.Object3D;
 	import C3.Camera.Camera;
 	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderSkyBox;
 	
 	public class SkyBoxBase extends Object3D
 	{
@@ -60,6 +62,9 @@ package C3.Mesh.SkyBox
 				0, 13, 1);
 			m_numTriangles = indexList.length/3;
 			indexRawData = indexList;
+			
+			m_shader = new ShaderSkyBox(this);
+			m_shader.material = m_material;
 		}
 		
 		public override function render(context:Context3D, camera:Camera):void
@@ -72,31 +77,7 @@ package C3.Mesh.SkyBox
 			if(m_transformDirty)
 				updateTransform();
 			
-			Camera.TEMP_FINAL_MATRIX.identity();
-			Camera.TEMP_FINAL_MATRIX.append(camera.projectMatrix);
-			
-//			var parent : Object3DContainer = m_parent;
-//			while(null != parent){
-//				parent.isRoot ? m_finalMatrix.append(parent.projMatrix) : parent.appendChildMatrix(m_finalMatrix);
-//				parent = parent.parent;
-//			}
-			
-			//渲染材质
-			if(!m_program)
-				createProgram(m_context);
-			
-			m_context.setCulling(Context3DTriangleFace.NONE);
-			m_context.setDepthTest(false,Context3DCompareMode.LESS);
-			m_context.setProgram(m_program);
-			m_context.setTextureAt(0,m_material.getTexture(m_context));
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
-			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, Camera.TEMP_FINAL_MATRIX, true);
-			m_context.setVertexBufferAt(0, m_vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-			m_context.drawTriangles(m_indexBuffer,0,m_numTriangles);
-			
-			m_context.setTextureAt(0,null);
-			m_context.setCulling(Context3DTriangleFace.NONE);
-			m_context.setDepthTest(true,Context3DCompareMode.LESS);
+			m_shader.render(context);
 		}
 		
 		protected override function createProgram(context3D:Context3D):void

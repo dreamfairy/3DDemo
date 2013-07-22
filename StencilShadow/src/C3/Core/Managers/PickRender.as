@@ -143,12 +143,8 @@ package C3.Core.Managers
 			m_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 4 , m_viewportData, 1);
 			
 			//获取需要渲染的目标
-			var renderableSet : Vector.<Object3D> = view.scene.children;
+			var renderableSet : Vector.<Object3D> = view.modelList;
 			var len : uint = renderableSet.length;
-			if(len == 1){
-				renderableSet = Object3DContainer(view.scene.children[0]).children;
-				len = renderableSet.length;
-			}
 
 			for(var i : int = 0; i < len; i++)
 			{

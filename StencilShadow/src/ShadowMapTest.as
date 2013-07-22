@@ -8,6 +8,7 @@ package
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
 	
+	import C3.AOI3DAXIS;
 	import C3.Object3D;
 	import C3.Object3DContainer;
 	import C3.View;
@@ -16,10 +17,12 @@ package
 	import C3.Geoentity.AnimGeoentity;
 	import C3.Material.CubeMaterial;
 	import C3.Material.TextureMaterial;
+	import C3.Mesh.PlaneMesh;
 	import C3.Mesh.SphereMesh;
 	import C3.Mesh.SkyBox.SkyBoxBase;
 	import C3.Parser.MD5AnimLoader;
 	import C3.Parser.MD5Loader;
+	import C3.Parser.ORGEMeshLoader;
 
 	[SWF(width = "800", height = "800", frameRate="30")]
 	public class ShadowMapTest extends Sprite
@@ -36,15 +39,13 @@ package
 			
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
 			addChild(m_view);
-			
-//			m_bitmap = new Bitmap();
-//			var cm : CubeMaterial = new CubeMaterial();
-//			cm.setTextureByCube(skyData);
-//			m_bitmap.bitmapData = cm.cubeBitmapDataList[1];
 			addChild(new Stats());
 			
+			m_ogreModel = new ORGEMeshLoader();
+			m_ogreModel.load("../source/ogre/ord.mesh.xml");
+			
 			m_skyBox = new SkyBoxBase("sky", new CubeMaterial(skyData));
-//			m_view.skyBox = m_skyBox;
+			m_view.skyBox = m_skyBox;
 			
 			m_tip = "";
 //			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
@@ -59,32 +60,21 @@ package
 			m_container = new Object3DContainer("root");
 			m_container.z = -20;
 			
-//			var bottomPlane : PlaneMesh = new PlaneMesh("floor",10,10, 2, AOI3DAXIS.XZ, new TextureMaterial(floorData));
-//			bottomPlane.uvRawData = Vector.<Number>([
-//				0,0,
-//				5,0,
-//				0,5,
-//				5,5]);
-//			bottomPlane.y = -6;
-//			bottomPlane.pickEnabled = true;
-//			bottomPlane.interactive = true;
-//			bottomPlane.buttonMode = true;
-//			bottomPlane.onMouseClick.add(onMouseClick);
-//			m_container.addChild(bottomPlane);
+			var bottomPlane : PlaneMesh = new PlaneMesh("floor",10,10, 2, AOI3DAXIS.XZ, new TextureMaterial(floorData));
+			bottomPlane.y = -5;
+			bottomPlane.pickEnabled = true;
+			bottomPlane.interactive = true;
+			bottomPlane.buttonMode = true;
+			bottomPlane.onMouseClick.add(onMouseClick);
+			m_container.addChild(bottomPlane);
 			
-//			var backPlane : PlaneMesh = new PlaneMesh("wall",10,15, 2, AOI3DAXIS.XY, new TextureMaterial(floorData));
-//			backPlane.uvRawData = Vector.<Number>([
-//				0,0,
-//				5,0,
-//				0,5,
-//				5,5]);
-//			backPlane.z = -4;
-//			backPlane.y = 2;
-//			backPlane.pickEnabled = true;
-//			backPlane.interactive = true;
-//			backPlane.buttonMode = true;
-//			backPlane.onMouseClick.add(onMouseClick);
-//			m_container.addChild(backPlane);
+			var backPlane : PlaneMesh = new PlaneMesh("wall",10,10, 2, AOI3DAXIS.XY, new TextureMaterial(floorData));
+			backPlane.z = -5;
+			backPlane.pickEnabled = true;
+			backPlane.interactive = true;
+			backPlane.buttonMode = true;
+			backPlane.onMouseClick.add(onMouseClick);
+			m_container.addChild(backPlane);
 			
 //			m_model = new MD5Loader("md5Mesh", new TextureMaterial(textureData));
 //			m_model.load(new mesh());
@@ -95,8 +85,6 @@ package
 			
 			m_sphere = new SphereMesh("earth",15,15, new TextureMaterial(earthData));
 			m_sphere.setScale(5,5,5);
-//			m_sphere.z = 5;
-//			m_sphere.y = -5;
 			m_sphere.pickEnabled = true;
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
@@ -189,6 +177,7 @@ package
 		
 		private var m_view : View;
 		private var m_model : MD5Loader;
+		private var m_ogreModel : ORGEMeshLoader;
 		private var m_key : Object = new Object();
 		private var m_container : Object3DContainer;
 		private var m_sphere : Object3D;

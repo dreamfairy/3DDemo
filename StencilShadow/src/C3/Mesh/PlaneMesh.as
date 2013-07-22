@@ -1,10 +1,14 @@
 package C3.Mesh
 {
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DTriangleFace;
 	import flash.geom.Vector3D;
 	
-	import C3.Material.IMaterial;
 	import C3.AOI3DAXIS;
 	import C3.Object3D;
+	import C3.Camera.Camera;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.ShaderSimple;
 
 	public class PlaneMesh extends Object3D
 	{
@@ -23,42 +27,139 @@ package C3.Mesh
 			m_width = width;
 			m_height = height;
 			m_axis = axis;
+			m_segment = segment < 2 ? 2 : segment;
 			
-			calcVertex(segment);
+			calcVertex();
 		}
 		
-		private function calcVertex(segment : uint) : void
+		private function calcVertex() : void
 		{
-			segment = segment<= 1 ? 2 : segment;
+			var top : int = getTop();
+			var left : int = getLeft();
+			var stepU : int = getStepU();
+			var stepV : int = getStepV();
 			
-			var halfWidth : int = m_width >> 1;
-			var startX : int = -halfWidth;
-			var endX : int = halfWidth;
-			
-			var halfHeight : int = m_height >> 1;
-			var startY : int = -halfHeight;
-			var endY : int = halfHeight;
-			
-			var stepX : int = m_width/(segment-1);
-			var stepY : int = m_height/(segment-1);
-			
-			var x : int = startX;
-			var y : int = startY;
 			var vertexList : Vector.<Number> = new Vector.<Number>();
 			
-			for(var i : int = 0; i < segment; i ++)
+			var curVertex : Vector3D = getFirstVertex(top,left);
+			var nextVertex : Vector3D;
+			var disU : int;
+			var disV : int;
+			
+			//横向
+			for(var i : int = 0; i < m_segment; i ++ )
 			{
-				for(var j : int = 0; j < segment; j ++)
+				disU = i * stepU;
+				//纵向
+				for(var j : int = 0; j < m_segment; j++)
 				{
-					fillVertexList(vertexList,x + j * stepX, y + i * stepY);
+					disV = j * stepV;
+					nextVertex = getNextVertex(curVertex,disU,disV);
+					vertexList.push(nextVertex.x,nextVertex.y,nextVertex.z);
 				}
 			}
 			
+			//循环计算顶点数
 			vertexRawData = vertexList;
-			
-			calcIndices(segment);
+			calcIndices();
 			calcUV();
 			calcNormal();
+			m_shader = new ShaderSimple(this)
+			m_shader.material = m_material;
+			m_shader.params.culling = Context3DTriangleFace.NONE;
+		}
+		
+		private function getNextVertex(firstVector : Vector3D, disU : int, disV : int, outPos : Vector3D = null) : Vector3D
+		{
+			outPos ||= new Vector3D();
+			switch(m_axis){
+				case AOI3DAXIS.XY:
+					outPos.setTo(firstVector.x + disU,firstVector.y + disV,0);
+					break;
+				case AOI3DAXIS.XZ:
+					outPos.setTo(firstVector.x + disU,0,firstVector.z + disV);
+					break;
+				case AOI3DAXIS.YZ:
+					outPos.setTo(0,firstVector.y + disV, firstVector.z + disU);
+					break;
+			}
+			return outPos;
+		}
+		
+		private function getFirstVertex(v : int, u : int, outPos : Vector3D = null) : Vector3D
+		{
+			outPos ||= new Vector3D();
+			switch(m_axis){
+				case AOI3DAXIS.XY:
+					outPos.setTo(u,v,0);
+					break;
+				case AOI3DAXIS.XZ:
+					outPos.setTo(u,0,v);
+					break;
+				case AOI3DAXIS.YZ:
+					outPos.setTo(0,v,u);
+					break;
+			}
+			return outPos;
+		}
+		
+		private function getStepU() : int
+		{
+			switch(m_axis){
+				case AOI3DAXIS.XY:
+				case AOI3DAXIS.XZ:
+					return m_width / (m_segment - 1);
+					break;
+				case AOI3DAXIS.YZ:
+					return -(m_width / (m_segment - 1));
+					break;
+			}
+			return 0;
+		}
+		
+		private function getStepV() : int
+		{
+			switch(m_axis){
+				case AOI3DAXIS.YZ:
+				case AOI3DAXIS.XY:
+					return -(m_height / (m_segment - 1));
+					break;
+				case AOI3DAXIS.XZ:
+					return m_height / (m_segment - 1);
+					break;
+			}
+			return 0;
+		}
+		
+		private function getTop() : int
+		{
+			switch(m_axis){
+				case AOI3DAXIS.XY:
+					return m_height >> 1;
+					break;
+				case AOI3DAXIS.XZ:
+					return -m_height >> 1;
+					break;
+				case AOI3DAXIS.YZ:
+					return m_height >> 1;
+					break;
+			}
+			return 0;
+		}
+		
+		private function getLeft() : int
+		{
+			switch(m_axis){
+				case AOI3DAXIS.XY:
+					return -m_width >> 1;
+					break;
+				case AOI3DAXIS.XZ:
+					return -m_width >> 1;
+					break;
+				case AOI3DAXIS.YZ:
+					return m_width >> 1;
+			}
+			return 0;
 		}
 		
 		/**
@@ -87,7 +188,7 @@ package C3.Mesh
 					list.push(x,y,0);
 					break;
 				case AOI3DAXIS.XZ:
-					list.push(x,1,y);
+					list.push(x,0,y);
 					break;
 				case AOI3DAXIS.YZ:
 					list.push(0,x,y);
@@ -95,26 +196,36 @@ package C3.Mesh
 			}
 		}
 		
-		private function calcIndices(segment : uint) : void
+		private function calcIndices() : void
 		{
 			var baseIndex : int = 0;
 			var indexList : Vector.<uint> = new Vector.<uint>();
-			var len : int = segment - 1;
+			var len : int = m_segment - 1;
 			for(var i : int = 0; i < len; i++)
 			{
 				for(var j : int = 0; j < len; j++)
 				{
-					indexList[baseIndex]		= i * segment + j;
-					indexList[baseIndex + 1]	= i * segment + j + 1;
-					indexList[baseIndex + 2]	= (i + 1) * segment + j;
-					indexList[baseIndex + 3]	= (i + 1) * segment + j;
-					indexList[baseIndex + 4]	= i * segment + j + 1;
-					indexList[baseIndex + 5]	= (i + 1) * segment + j + 1;
+					//顺时针 在右手坐标系中为 Frong
+					indexList[baseIndex]		= i * m_segment + j; //左上
+					indexList[baseIndex + 1]	= (i + 1) * m_segment + j + 1; //右下
+					indexList[baseIndex + 2]	= i * m_segment + j + 1; //左下
+					indexList[baseIndex + 3]	= i * m_segment + j; //左上
+					indexList[baseIndex + 4]	= (i + 1) * m_segment + j; //右上
+					indexList[baseIndex + 5]	= (i + 1) * m_segment + j + 1; //右下
+//逆时针
+//					indexList[baseIndex]		= i * m_segment + j;
+//					indexList[baseIndex + 1]	= i * m_segment + j + 1;
+//					indexList[baseIndex + 2]	= (i + 1) * m_segment + j;
+//					indexList[baseIndex + 3]	= (i + 1) * m_segment + j;
+//					indexList[baseIndex + 4]	= i * m_segment + j + 1;
+//					indexList[baseIndex + 5]	= (i + 1) * m_segment + j + 1;
 					
 					baseIndex += 6;
 				}
 			}
 			
+//			trace(indexList);
+//			indexList = Vector.<uint>([0,3,1,0,2,3]);
 			indexRawData = indexList;
 			m_numTriangles = len * len * 2;
 		}
@@ -124,6 +235,13 @@ package C3.Mesh
 			uvRawData = Vector.<Number>([0,0,1,0,0,1,1,1]);
 		}
 		
+		public override function render(context:Context3D, camera:Camera):void
+		{
+			super.render(context,camera);
+			m_shader.render(context);
+		}
+		
 		private var m_axis : String;
+		private var m_segment : int;
 	}
 }

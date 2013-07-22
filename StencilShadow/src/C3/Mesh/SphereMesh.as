@@ -103,11 +103,13 @@ package C3.Mesh
 			
 			//创建Shader
 			m_shader = new ShaderSimple(this);
+			m_shader.material = mat;
 		}
 		
 		public override function render(context:Context3D, camera:Camera):void
 		{
 			super.render(context,camera);
+			m_shader.render(context);
 		}
 		
 		public static function computeNumTris(slices : uint, stacks : uint) : uint

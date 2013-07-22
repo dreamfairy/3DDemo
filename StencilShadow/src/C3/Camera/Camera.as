@@ -328,6 +328,13 @@ package C3.Camera
 			return m_proj;
 		}
 		
+		public function get viewProjMatrix() : Matrix3D
+		{
+			var viewProj : Matrix3D = getViewMatrix();
+			viewProj.append(m_proj);
+			return viewProj;
+		}
+		
 		public function dispose():void
 		{
 			//以后再说

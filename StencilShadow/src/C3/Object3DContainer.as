@@ -113,13 +113,7 @@ package C3
 		 */
 		public function appendChildMatrix(matrix : Matrix3D) : void
 		{
-			if(!m_isRoot) {
-				matrix.append(m_transform);
-			}
-			else{
-				matrix.append(m_camera.getViewMatrix());
-				matrix.append(m_camera.projectMatrix);
-			}
+			matrix.append(transform);
 		}
 		
 		public override function render(context : Context3D, camera : Camera) : void
