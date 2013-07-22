@@ -1,5 +1,11 @@
 package C3
 {
+	import C3.Camera.Camera;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Mesh.MeshBase;
+	import C3.PostRender.IPostRender;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -11,12 +17,6 @@ package C3
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
 	import flash.utils.Dictionary;
-	
-	import C3.Camera.Camera;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.Shader;
-	import C3.Mesh.MeshBase;
-	import C3.PostRender.IPostRender;
 	
 	import org.osflash.signals.Signal;
 	
@@ -407,6 +407,11 @@ package C3
 			return m_numTriangles;
 		}
 		
+		public function set numTriangles(value : uint) : void
+		{
+			m_numTriangles = value;
+		}
+		
 		public function get parent() : Object3DContainer
 		{
 			return m_parent;
@@ -495,6 +500,16 @@ package C3
 		public function get modelViewProjMatrix() : Matrix3D
 		{
 			return m_finalMatrix;
+		}
+		
+		public function get shader() : Shader
+		{
+			return m_shader;
+		}
+		
+		public function set shader(value : Shader) : void
+		{
+			m_shader = value;
 		}
 		
 		/**

@@ -1,30 +1,31 @@
 package
 {
-	import flash.display.Bitmap;
-	import flash.display.Sprite;
-	import flash.events.Event;
-	import flash.events.KeyboardEvent;
-	import flash.events.MouseEvent;
-	import flash.text.TextField;
-	import flash.ui.Keyboard;
-	
 	import C3.AOI3DAXIS;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.View;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Event.MouseEvent3D;
 	import C3.Geoentity.AnimGeoentity;
 	import C3.Material.CubeMaterial;
 	import C3.Material.TextureMaterial;
 	import C3.Mesh.PlaneMesh;
-	import C3.Mesh.SphereMesh;
 	import C3.Mesh.SkyBox.SkyBoxBase;
+	import C3.Mesh.SphereMesh;
+	import C3.Object3D;
+	import C3.Object3DContainer;
 	import C3.Parser.MD5AnimLoader;
 	import C3.Parser.MD5Loader;
 	import C3.Parser.ORGEMeshLoader;
+	import C3.View;
+	
+	import flash.display.Bitmap;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
+	import flash.filters.GlowFilter;
+	import flash.text.TextField;
+	import flash.ui.Keyboard;
 
-	[SWF(width = "800", height = "800", frameRate="30")]
+	[SWF(width = "600", height = "600", frameRate="60")]
 	public class ShadowMapTest extends Sprite
 	{
 		public function ShadowMapTest()
@@ -41,17 +42,16 @@ package
 			addChild(m_view);
 			addChild(new Stats());
 			
-			m_ogreModel = new ORGEMeshLoader();
-			m_ogreModel.load("../source/ogre/ord.mesh.xml");
-			
 			m_skyBox = new SkyBoxBase("sky", new CubeMaterial(skyData));
 			m_view.skyBox = m_skyBox;
 			
 			m_tip = "";
-//			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
+			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
 			m_info = new TextField();
-			m_info.textColor = 0xFFFFFFFF;
+			m_info.textColor = 0xFFFFFF;
+			m_info.filters = [new GlowFilter(0,1,2,2,10)];
 			m_info.htmlText = m_tip;
+			m_info.y = stage.stageHeight >> 1;
 			addChild(m_info);
 			
 			m_info.width = m_info.textWidth + 10;
@@ -85,11 +85,18 @@ package
 			
 			m_sphere = new SphereMesh("earth",15,15, new TextureMaterial(earthData));
 			m_sphere.setScale(5,5,5);
+			m_sphere.y = -2;
 			m_sphere.pickEnabled = true;
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
 			m_sphere.onMouseClick.add(onMouseClick);
 			m_container.addChild(m_sphere);
+			
+			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
+			m_ogreModel.load("../source/ogre/ord.mesh.xml");
+			m_ogreModel.pickEnabled = m_ogreModel.interactive = m_ogreModel.buttonMode = true;
+			m_ogreModel.onMouseClick.add(onMouseClick);
+			m_container.addChild(m_ogreModel);
 			
 //			loadAnim();
 			
@@ -209,5 +216,8 @@ package
 		
 		[Embed(source="../source/skybox3.jpg")]
 		private var skyData : Class;
+		
+		[Embed(source="../source/ogre/BOSS_ORDRAAKE.jpg")]
+		private var ogreData : Class;
 	}
 }

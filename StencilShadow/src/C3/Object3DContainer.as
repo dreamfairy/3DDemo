@@ -53,6 +53,9 @@ package C3
 				m_modelList.push(target);
 				target.parent = this;
 				target.visible = true;
+//				target.pickEnabled = m_pickEnabled;
+//				target.interactive = m_interactive;
+//				target.buttonMode = m_buttonMode;
 			}	
 		}
 		

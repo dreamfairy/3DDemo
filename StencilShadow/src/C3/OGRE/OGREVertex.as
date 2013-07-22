@@ -6,6 +6,7 @@ package C3.OGRE
 	{
 		public var uv_x : Number;
 		public var uv_y : Number;
+		public var pos : Vector3D;
 		/**权重开始索引**/
 		public var weight_index : Number = 0;
 		/**权重数量**/
