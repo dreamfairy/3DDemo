@@ -513,6 +513,14 @@ package C3
 		}
 		
 		/**
+		 * 骨骼部分，以后再拆分
+		 */
+		public function getSkeleton() : *
+		{
+			return null;
+		}
+		
+		/**
 		 * 缓存多个context创建的buffer
 		 */
 		protected var m_contextBufferCache : Dictionary = new Dictionary();

@@ -229,11 +229,11 @@ package C3
 			return m_teapotTexture;
 		}
 		
-		[Embed(source="../../source/panda.obj",mimeType = "application/octet-stream")] 
+		[Embed(source="../../source/PET_PANDA.obj",mimeType = "application/octet-stream")] 
 		private var m_teapotMeshData : Class;
 		private var m_teapotMesh : Stage3DObjParser;
 		
-		[Embed(source="../../source/panda.png")]
+		[Embed(source="../../source/PET_PANDA.jpg")]
 		private var m_teapotTexuteData : Class;
 		private var m_teapotTexture : Texture;
 	}

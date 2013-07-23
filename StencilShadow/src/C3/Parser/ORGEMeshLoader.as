@@ -1,14 +1,5 @@
 package C3.Parser
 {
-	import C3.Camera.Camera;
-	import C3.Event.AOI3DLOADEREVENT;
-	import C3.Geoentity.MeshGeoentity;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.ShaderSimple;
-	import C3.OGRE.MeshData;
-	import C3.OGRE.OGREMeshParser;
-	import C3.Object3D;
-	
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
@@ -17,10 +8,19 @@ package C3.Parser
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	
+	import C3.Object3D;
+	import C3.Camera.Camera;
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Geoentity.MeshGeoentity;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.ShaderSimple;
+	import C3.OGRE.MeshData;
+	import C3.OGRE.OGREMeshParser;
 
 	public class ORGEMeshLoader extends MeshGeoentity
 	{
-		public function ORGEMeshLoader(name : String, mat : IMaterial)
+		public function ORGEMeshLoader(name : String, mat : IMaterial, autoLoadSkelton : Boolean = false)
 		{
 			super(name, mat);
 			m_ogreMeshParser = new OGREMeshParser();

@@ -1,21 +1,5 @@
 package
 {
-	import C3.AOI3DAXIS;
-	import C3.Event.AOI3DLOADEREVENT;
-	import C3.Event.MouseEvent3D;
-	import C3.Geoentity.AnimGeoentity;
-	import C3.Material.CubeMaterial;
-	import C3.Material.TextureMaterial;
-	import C3.Mesh.PlaneMesh;
-	import C3.Mesh.SkyBox.SkyBoxBase;
-	import C3.Mesh.SphereMesh;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.Parser.MD5AnimLoader;
-	import C3.Parser.MD5Loader;
-	import C3.Parser.ORGEMeshLoader;
-	import C3.View;
-	
 	import flash.display.Bitmap;
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -24,6 +8,25 @@ package
 	import flash.filters.GlowFilter;
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
+	
+	import C3.AOI3DAXIS;
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	import C3.View;
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Event.MouseEvent3D;
+	import C3.Geoentity.AnimGeoentity;
+	import C3.Material.CubeMaterial;
+	import C3.Material.DDSTextureMaterial;
+	import C3.Material.TextureMaterial;
+	import C3.Mesh.PlaneMesh;
+	import C3.Mesh.SphereMesh;
+	import C3.Mesh.SkyBox.SkyBoxBase;
+	import C3.Parser.DDSParser;
+	import C3.Parser.MD5AnimLoader;
+	import C3.Parser.MD5Loader;
+	import C3.Parser.OGREAnimLoader;
+	import C3.Parser.ORGEMeshLoader;
 
 	[SWF(width = "600", height = "600", frameRate="60")]
 	public class ShadowMapTest extends Sprite
@@ -46,7 +49,7 @@ package
 			m_view.skyBox = m_skyBox;
 			
 			m_tip = "";
-			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
+//			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
 			m_info = new TextField();
 			m_info.textColor = 0xFFFFFF;
 			m_info.filters = [new GlowFilter(0,1,2,2,10)];
@@ -93,10 +96,13 @@ package
 			m_container.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
-			m_ogreModel.load("../source/ogre/ord.mesh.xml");
+			m_ogreModel.load("../source/ogre/PET_CAT.MESH.xml");
 			m_ogreModel.pickEnabled = m_ogreModel.interactive = m_ogreModel.buttonMode = true;
 			m_ogreModel.onMouseClick.add(onMouseClick);
 			m_container.addChild(m_ogreModel);
+			
+			m_ogreAnim = new OGREAnimLoader("ogreAnim");
+			m_ogreAnim.load("../source/ogre/WALK.SKELETON.xml");
 			
 //			loadAnim();
 			
@@ -185,6 +191,7 @@ package
 		private var m_view : View;
 		private var m_model : MD5Loader;
 		private var m_ogreModel : ORGEMeshLoader;
+		private var m_ogreAnim : OGREAnimLoader;
 		private var m_key : Object = new Object();
 		private var m_container : Object3DContainer;
 		private var m_sphere : Object3D;
@@ -217,7 +224,10 @@ package
 		[Embed(source="../source/skybox3.jpg")]
 		private var skyData : Class;
 		
-		[Embed(source="../source/ogre/BOSS_ORDRAAKE.jpg")]
+		[Embed(source="../source/ogre/PET_CAT.jpg")]
 		private var ogreData : Class;
+		
+		[Embed(source="../source/ogre/PET_CAT.DDS", mimeType="application/octet-stream")]
+		private var ogreDDSData : Class;
 	}
 }
