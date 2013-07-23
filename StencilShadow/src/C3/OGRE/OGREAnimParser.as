@@ -120,6 +120,11 @@ package C3.OGRE
 			}
 		}
 		
+		public function get joints() : Vector.<OGREJoint>
+		{
+			return m_jointList;
+		}
+		
 		private var _textData : XML;
 		private var m_jointCache : Dictionary = new Dictionary();
 		private var m_jointList : Vector.<OGREJoint>;

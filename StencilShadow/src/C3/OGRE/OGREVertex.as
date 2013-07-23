@@ -12,6 +12,7 @@ package C3.OGRE
 		/**权重数量**/
 		public var weight_count : Number = 0;
 		public var id : Number = 0;
+		public var index : uint;
 		
 		/**切线向量**/
 		public var tangent : Vector3D;

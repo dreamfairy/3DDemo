@@ -1,11 +1,12 @@
 package C3.OGRE
 {
+	import C3.Event.AOI3DLOADEREVENT;
+	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
-	
-	import C3.Event.AOI3DLOADEREVENT;
+	import flash.utils.Dictionary;
 
 	public class OGREMeshParser extends EventDispatcher
 	{
@@ -23,7 +24,17 @@ package C3.OGRE
 		{
 			if(_textData.hasOwnProperty(SHARED_GEOMETRY))parseGeometry();
 			else parseMeshes();
+			calcMaxJoints();
 			this.dispatchEvent(new Event(Event.COMPLETE));
+		}
+		
+		private function calcMaxJoints() : void
+		{
+			m_maxJoints = 0;
+			for each(var count : int in m_maxJointsCache){
+				if(count > m_maxJoints)
+					m_maxJoints = count;
+			}
 		}
 		
 		private function parseGeometry() : void
@@ -39,6 +50,9 @@ package C3.OGRE
 						break;
 					case SUB_MESHS:
 						parseIndex(node.child(SUB_MESH).children()[0], mesh);
+						break;
+					case BONE_ASSIGNMENTS:
+						parseBone(node, mesh);
 						break;
 				}
 			}
@@ -98,6 +112,11 @@ package C3.OGRE
 				vertex = mesh.ogre_vertex[vertexIndex];
 				vertex.weight_count = bone.@weight;
 				vertex.weight_index = bone.@boneindex;
+				vertex.index = vertexIndex;
+				if(!m_maxJointsCache.hasOwnProperty(vertex.index))
+					m_maxJointsCache[vertex.index] = 0;
+				
+				m_maxJointsCache[vertex.index]++;
 			}
 		}
 		
@@ -164,8 +183,15 @@ package C3.OGRE
 			}
 		}
 		
+		public function get maxJoints() : uint
+		{
+			return m_maxJoints;
+		}
+		
 		private var _textData : XML;
 		private var ogre_mesh : Vector.<MeshData> = new Vector.<MeshData>();
+		private var m_maxJoints : uint;
+		private var m_maxJointsCache : Dictionary = new Dictionary();
 		
 		/**独立多边形**/
 		private static const SHARED_GEOMETRY : String = "sharedgeometry";
