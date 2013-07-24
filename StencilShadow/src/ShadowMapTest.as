@@ -96,13 +96,11 @@ package
 			m_container.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
-			m_ogreModel.load("../source/ogre/PET_CAT.MESH.xml");
+			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
 			m_ogreModel.pickEnabled = m_ogreModel.interactive = m_ogreModel.buttonMode = true;
 			m_ogreModel.onMouseClick.add(onMouseClick);
+			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
 			m_container.addChild(m_ogreModel);
-			
-			m_ogreAnim = new OGREAnimLoader("ogreAnim");
-			m_ogreAnim.load("../source/ogre/WALK.SKELETON.xml");
 			
 //			loadAnim();
 			
@@ -191,7 +189,6 @@ package
 		private var m_view : View;
 		private var m_model : MD5Loader;
 		private var m_ogreModel : ORGEMeshLoader;
-		private var m_ogreAnim : OGREAnimLoader;
 		private var m_key : Object = new Object();
 		private var m_container : Object3DContainer;
 		private var m_sphere : Object3D;

@@ -1,9 +1,12 @@
 package C3.OGRE
 {
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	
+	import C3.Parser.Model.IJoint;
 
 	public class OGREAnimParser extends EventDispatcher
 	{
@@ -35,11 +38,12 @@ package C3.OGRE
 						break;
 				}
 			}
+			this.dispatchEvent(new Event(Event.COMPLETE));
 		}
 		
 		private function parseBone(node : XML) : void
 		{
-			m_jointList = new Vector.<OGREJoint>();
+			m_jointList = new Vector.<IJoint>();
 			
 			var boneData : XML;
 			var bone : OGREJoint;
@@ -120,14 +124,14 @@ package C3.OGRE
 			}
 		}
 		
-		public function get joints() : Vector.<OGREJoint>
+		public function get joints() : Vector.<IJoint>
 		{
 			return m_jointList;
 		}
 		
 		private var _textData : XML;
 		private var m_jointCache : Dictionary = new Dictionary();
-		private var m_jointList : Vector.<OGREJoint>;
+		private var m_jointList : Vector.<IJoint>;
 		
 		public var animationName : String;
 		public var animationDuration : Number;

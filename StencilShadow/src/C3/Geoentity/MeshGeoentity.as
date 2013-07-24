@@ -1,9 +1,9 @@
 package C3.Geoentity
 {
 	import C3.Object3DContainer;
-	import C3.MD5.MD5Joint;
 	import C3.MD5.MeshData;
 	import C3.Material.IMaterial;
+	import C3.Parser.Model.IJoint;
 
 	public class MeshGeoentity extends Object3DContainer
 	{
@@ -17,7 +17,7 @@ package C3.Geoentity
 			throw new Error("这货需要重写");
 		}
 		
-		public function get joints() : Vector.<MD5Joint>
+		public function get joints() : Vector.<IJoint>
 		{
 			throw new Error("这货需要重写");
 		}

@@ -2,8 +2,10 @@ package C3.OGRE
 {
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
+	
+	import C3.Parser.Model.IJoint;
 
-	public class OGREJoint
+	public class OGREJoint implements IJoint
 	{
 		public var id : uint;
 		public var name : String;

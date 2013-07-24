@@ -1,17 +1,19 @@
 package C3.OGRE
 {
-	import C3.Event.AOI3DLOADEREVENT;
-	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Parser.Model.IJoint;
 
 	public class OGREMeshParser extends EventDispatcher
 	{
-		public function OGREMeshParser()
+		public function OGREMeshParser(loadSkeleton : Boolean)
 		{
+			m_loadSkeleton = loadSkeleton;
 		}
 		
 		public function load(data : ByteArray) : void
@@ -20,12 +22,29 @@ package C3.OGRE
 			handleData();
 		}
 		
+		public function loadSkeleton(data : ByteArray) : void
+		{
+			m_ogreAnimParser = new OGREAnimParser();
+			m_ogreAnimParser.addEventListener(Event.COMPLETE, onParsedSkeleton);
+			m_ogreAnimParser.load(data);
+		}
+		
 		private function handleData() : void
 		{
 			if(_textData.hasOwnProperty(SHARED_GEOMETRY))parseGeometry();
 			else parseMeshes();
 			calcMaxJoints();
+			
+			if(!m_skeletonName || !m_loadSkeleton){
+				this.dispatchEvent(new Event(Event.COMPLETE));
+			}
+		}
+		
+		private function onParsedSkeleton(e: Event) : void
+		{
+			m_ogreAnimParser.removeEventListener(Event.COMPLETE, onParsedSkeleton);
 			this.dispatchEvent(new Event(Event.COMPLETE));
+			trace("Skeleton Link 解析完毕");
 		}
 		
 		private function calcMaxJoints() : void
@@ -49,10 +68,13 @@ package C3.OGRE
 						parseVertex(node, mesh);
 						break;
 					case SUB_MESHS:
-						parseIndex(node.child(SUB_MESH).children()[0], mesh);
+						parseMeshes(node, mesh);
 						break;
 					case BONE_ASSIGNMENTS:
 						parseBone(node, mesh);
+						break;
+					case SKELETON_LINK:
+						parseSkeleton(node);
 						break;
 				}
 			}
@@ -60,18 +82,50 @@ package C3.OGRE
 			this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.ON_MESH_LOADED, mesh));
 		}
 		
-		private function parseMeshes() : void
+		private function parseMeshes(data : XML = null, mesh : MeshData = null) : void
 		{
 			var node : XML;
-			for each(node in _textData.children())
+			var content : XML = data ? data : _textData;
+			for each(node in content.children())
 			{
 				var nodeName : String = node.name();
 				switch(nodeName){
 					case SUB_MESHS:
 						parseSubMesh(node);
 						break;
+					case SUB_MESH:
+						parseSharedGeometrySubMesh(node, mesh);
+						break;
 				}
 			}
+		}
+		
+		/**
+		 * 解析多边形的subMesh
+		 */
+		private function parseSharedGeometrySubMesh(data : XML, mesh : MeshData) : void
+		{
+			var node : XML;
+			for each(node in data.children())
+			{
+				var nodeName : String = node.name();
+				switch(nodeName){
+					case FACE:
+						parseIndex(node, mesh);
+						break;
+				}
+			}
+		}
+		
+		/**
+		 * 解析骨骼
+		 */
+		private function parseSkeleton(node : XML) : void
+		{
+			m_skeletonName = node.@name;
+			
+			if(m_loadSkeleton)
+				this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.REQUEST_SKELETON,m_skeletonName));
 		}
 		
 		private function parseSubMesh(data : XML) : void
@@ -99,7 +153,7 @@ package C3.OGRE
 		}
 		
 		/**
-		 * 解析骨骼
+		 * 解析顶点和骨骼的对应关系
 		 */
 		private function parseBone(node : XML, mesh : MeshData) : void
 		{
@@ -110,8 +164,9 @@ package C3.OGRE
 			{
 				vertexIndex = bone.@vertexindex;
 				vertex = mesh.ogre_vertex[vertexIndex];
-				vertex.weight_count = bone.@weight;
+				vertex.weight = bone.@weight;
 				vertex.weight_index = bone.@boneindex;
+				vertex.weight_count++;
 				vertex.index = vertexIndex;
 				if(!m_maxJointsCache.hasOwnProperty(vertex.index))
 					m_maxJointsCache[vertex.index] = 0;
@@ -188,11 +243,23 @@ package C3.OGRE
 			return m_maxJoints;
 		}
 		
+		public function get joints() : Vector.<IJoint>
+		{
+			return m_ogreAnimParser.joints;
+		}
+		
 		private var _textData : XML;
+		private var _skeletonData : XML;
+		private var m_skeletonName : String;
 		private var ogre_mesh : Vector.<MeshData> = new Vector.<MeshData>();
 		private var m_maxJoints : uint;
 		private var m_maxJointsCache : Dictionary = new Dictionary();
+		private var m_skeletonParsed : Boolean = false;
+		private var m_ogreAnimParser : OGREAnimParser;
+		private var m_loadSkeleton : Boolean; //如果有骨骼文件，是否自动加载
 		
+		/**骨骼文件**/
+		private static const SKELETON_LINK : String = "skeletonlink";
 		/**独立多边形**/
 		private static const SHARED_GEOMETRY : String = "sharedgeometry";
 		/**子网格集合**/

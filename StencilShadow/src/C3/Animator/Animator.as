@@ -224,7 +224,7 @@ package C3.Animator
 		
 		private function CalcMeshAnim() : void
 		{
-			var joints : Vector.<MD5Joint> = m_model.joints;
+			var joints : Vector.<MD5Joint> = new Vector.<MD5Joint>();
 			var jointsNum : int = joints.length;
 			
 			if(m_model.useCPU){

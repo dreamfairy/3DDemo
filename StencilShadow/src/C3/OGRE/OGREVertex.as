@@ -11,6 +11,8 @@ package C3.OGRE
 		public var weight_index : Number = 0;
 		/**权重数量**/
 		public var weight_count : Number = 0;
+		/**权重值**/
+		public var weight : Number = 0;
 		public var id : Number = 0;
 		public var index : uint;
 		

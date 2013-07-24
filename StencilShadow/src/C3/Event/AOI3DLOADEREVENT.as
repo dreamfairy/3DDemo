@@ -2,18 +2,18 @@ package C3.Event
 {
 	import flash.events.Event;
 	
-	import C3.MD5.MeshData;
-	
 	public class AOI3DLOADEREVENT extends Event
 	{
 		public static const ON_MESH_LOADED : String = "OML";
 		public static const ON_ANIM_LOADED : String = "OAL";
-		public function AOI3DLOADEREVENT(type:String, mesh : *, bubbles:Boolean=false, cancelable:Boolean=false)
+		public static const REQUEST_SKELETON : String = "RS";
+		public static const ON_SKELETON_LOADED : String = "OSL";
+		public function AOI3DLOADEREVENT(type:String, data : *, bubbles:Boolean=false, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
-			this.mesh = mesh;
+			this.data = data;
 		}
 		
-		public var mesh : *;
+		public var data : *;
 	}
 }

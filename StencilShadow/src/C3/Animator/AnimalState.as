@@ -4,17 +4,17 @@ package C3.Animator
 	import flash.geom.Vector3D;
 	import flash.utils.getTimer;
 	
+	import C3.IDispose;
 	import C3.Object3D;
 	import C3.OGRE.OGREFrameData;
 	import C3.OGRE.OGREJoint;
-	import C3.OGRE.OGREVertex;
 
 	/**
 	 * 一段动画
 	 */
-	public class AnimalState
+	public class AnimalState implements IDispose
 	{
-		public function AnimalState()
+		public function AnimalState(animalSet : AnimationSet, animationName : String)
 		{
 		}
 		
@@ -26,7 +26,7 @@ package C3.Animator
 		
 		public function checkAnimaltionDirty() : Boolean
 		{
-			
+			return false;
 		}
 		
 		public function play() : void
@@ -141,10 +141,12 @@ package C3.Animator
 		
 		private function getNextFrame(tick : Number, timeList : Vector.<Number>) : int
 		{
-			for(var i : int = 0; i < timeList; i++)
+			for(var i : int = 0; i < timeList.length; i++)
 			{
 				if(tick >= timeList[i]) return i;
 			}
+			
+			return -1;
 		}
 		
 		/**
@@ -153,6 +155,12 @@ package C3.Animator
 		private function get boneMatrices() : Matrix3D
 		{
 			return null;
+		}
+		
+		public function dispose():void
+		{
+			// TODO Auto Generated method stub
+			
 		}
 		
 		private var m_cpuAnimVertexRawData : Vector.<Number> = new Vector.<Number>();
