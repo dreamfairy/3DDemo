@@ -99,6 +99,7 @@ package
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
 			m_ogreModel.pickEnabled = m_ogreModel.interactive = m_ogreModel.buttonMode = true;
 			m_ogreModel.onMouseClick.add(onMouseClick);
+			m_ogreModel.animatorset.onStateLoaded.add(onAnimalStateLoaded);
 			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
 			m_container.addChild(m_ogreModel);
 			
@@ -110,6 +111,15 @@ package
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 			this.addEventListener(Event.ENTER_FRAME, onEnter);
+		}
+		
+		private function onAnimalStateLoaded(actionName : String) : void
+		{
+			switch(actionName){
+				case "Walk":
+					m_ogreModel.animatorset.getState(actionName).play();
+					break;
+			}
 		}
 		
 		private function onKeyDown(e:KeyboardEvent) : void
@@ -150,8 +160,8 @@ package
 //			m_skyBox.rotateY = t;
 			m_view.render();
 			renderKeyboard();
-			
-			m_container.rotateY = t;
+			m_sphere.rotateX = -t;
+//			m_container.rotateY = t;
 		}
 		
 		private function renderKeyboard() : void
@@ -167,6 +177,12 @@ package
 			
 			if(m_key[Keyboard.NUMBER_4])
 				m_model.animator.pause();
+			
+			if(m_key[Keyboard.LEFT])
+				m_container.rotateY += .5;
+			
+			if(m_key[Keyboard.RIGHT])
+				m_container.rotateY -= .5;
 		}
 		
 		private function onMouseWheel(e:MouseEvent) : void

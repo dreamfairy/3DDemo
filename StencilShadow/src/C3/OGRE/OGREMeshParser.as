@@ -58,7 +58,7 @@ package C3.OGRE
 		
 		private function parseGeometry() : void
 		{
-			var mesh : MeshData = new MeshData();
+			var mesh : OgreMeshData = new OgreMeshData();
 			var node : XML;
 			for each(node in _textData.children())
 			{
@@ -82,7 +82,7 @@ package C3.OGRE
 			this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.ON_MESH_LOADED, mesh));
 		}
 		
-		private function parseMeshes(data : XML = null, mesh : MeshData = null) : void
+		private function parseMeshes(data : XML = null, mesh : OgreMeshData = null) : void
 		{
 			var node : XML;
 			var content : XML = data ? data : _textData;
@@ -103,7 +103,7 @@ package C3.OGRE
 		/**
 		 * 解析多边形的subMesh
 		 */
-		private function parseSharedGeometrySubMesh(data : XML, mesh : MeshData) : void
+		private function parseSharedGeometrySubMesh(data : XML, mesh : OgreMeshData) : void
 		{
 			var node : XML;
 			for each(node in data.children())
@@ -132,7 +132,7 @@ package C3.OGRE
 		{
 			var subMeshData : XML = data.child(SUB_MESH)[0];
 			var node : XML;
-			var mesh : MeshData = new MeshData();;
+			var mesh : OgreMeshData = new OgreMeshData();;
 			for each(node in subMeshData.children())
 			{
 				var nodeName : String = node.name();
@@ -155,7 +155,7 @@ package C3.OGRE
 		/**
 		 * 解析顶点和骨骼的对应关系
 		 */
-		private function parseBone(node : XML, mesh : MeshData) : void
+		private function parseBone(node : XML, mesh : OgreMeshData) : void
 		{
 			var bone : XML;
 			var vertex : OGREVertex;
@@ -164,9 +164,7 @@ package C3.OGRE
 			{
 				vertexIndex = bone.@vertexindex;
 				vertex = mesh.ogre_vertex[vertexIndex];
-				vertex.weight = bone.@weight;
-				vertex.weight_index = bone.@boneindex;
-				vertex.weight_count++;
+				vertex.boneList.push(new OGREVertexBoneData(bone.@boneindex,bone.@weight));
 				vertex.index = vertexIndex;
 				if(!m_maxJointsCache.hasOwnProperty(vertex.index))
 					m_maxJointsCache[vertex.index] = 0;
@@ -178,7 +176,7 @@ package C3.OGRE
 		/**
 		 * 解析索引
 		 */
-		private function parseIndex(data : XML, mesh : MeshData) : void
+		private function parseIndex(data : XML, mesh : OgreMeshData) : void
 		{
 			var numTriangle : uint = data.@count; 
 			var face : XML;
@@ -197,7 +195,7 @@ package C3.OGRE
 		/**
 		 * 解析顶点
 		 */
-		private function parseVertex(data : XML, mesh : MeshData) : void
+		private function parseVertex(data : XML, mesh : OgreMeshData) : void
 		{
 			mesh.ogre_numVertex = data.@vertexcount;
 			var vertexBuffer : XML;
@@ -248,10 +246,11 @@ package C3.OGRE
 			return m_ogreAnimParser.joints;
 		}
 		
+		public var ogre_mesh : Vector.<OgreMeshData> = new Vector.<OgreMeshData>();
+		
 		private var _textData : XML;
 		private var _skeletonData : XML;
 		private var m_skeletonName : String;
-		private var ogre_mesh : Vector.<MeshData> = new Vector.<MeshData>();
 		private var m_maxJoints : uint;
 		private var m_maxJointsCache : Dictionary = new Dictionary();
 		private var m_skeletonParsed : Boolean = false;

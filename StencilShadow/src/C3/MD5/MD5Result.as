@@ -88,7 +88,7 @@ package C3.MD5
 			jointIndexList = new Vector.<VertexBuffer3D>();
 			jointWeightList = new Vector.<VertexBuffer3D>();
 			
-			for each(var mesh : MeshData in md5MeshParser.md5_mesh){
+			for each(var mesh : MD5MeshData in md5MeshParser.md5_mesh){
 				translateGeom(mesh);
 				uvBufferList.push(mesh.uvBuffer);
 				indexBufferList.push(mesh.indiceBuffer);
@@ -103,7 +103,7 @@ package C3.MD5
 			this.dispatchEvent(new Event("meshLoaded"));
 		}
 		
-		private function translateGeom(meshData : MeshData) : void
+		private function translateGeom(meshData : MD5MeshData) : void
 		{
 			meshData.uvRawData = meshData.getUv();
 			meshData.uvBuffer = context.createVertexBuffer(meshData.uvRawData.length/2,2);
@@ -276,7 +276,7 @@ package C3.MD5
 		
 		private function cpuCalcJoint(meshIndex : int, view : Matrix3D) : void
 		{
-			var meshData : MeshData = md5MeshParser.md5_mesh[meshIndex];
+			var meshData : MD5MeshData = md5MeshParser.md5_mesh[meshIndex];
 			var vertexLen : int = meshData.md5_vertex.length;
 			
 			//当前索引
@@ -339,7 +339,7 @@ package C3.MD5
 		{
 			//取出当前帧数据
 			var frameData : MD5FrameData = md5AnimParser.frameData[frame];
-			var meshData : MeshData = md5MeshParser.md5_mesh[meshIndex];
+			var meshData : MD5MeshData = md5MeshParser.md5_mesh[meshIndex];
 			
 			CalcMeshAnim(frameData);
 			if(useCPU){

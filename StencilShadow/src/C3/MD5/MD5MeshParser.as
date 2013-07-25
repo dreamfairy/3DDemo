@@ -59,7 +59,7 @@ package C3.MD5
 				
 				if(_reachedEOF){
 					calculateMaxJointCount();
-					for each(var mesh : MeshData in md5_mesh){
+					for each(var mesh : MD5MeshData in md5_mesh){
 						this.dispatchEvent(new AOI3DLOADEREVENT(AOI3DLOADEREVENT.ON_MESH_LOADED,mesh));
 					}
 					this.dispatchEvent(new Event(Event.COMPLETE));
@@ -78,7 +78,7 @@ package C3.MD5
 			var numMeshData : int = md5_mesh.length;
 			for(var i : int = 0; i < numMeshData; ++i)
 			{
-				var meshData : MeshData = md5_mesh[i];
+				var meshData : MD5MeshData = md5_mesh[i];
 				var vertexData : Vector.<MD5Vertex> = meshData.md5_vertex;
 				var numVerts : int = vertexData.length;
 				
@@ -121,9 +121,9 @@ package C3.MD5
 			if(token != "{") throw new Error("关键字错误");
 			
 			_shaders ||= new Vector.<String>();
-			md5_mesh ||= new Vector.<MeshData>();
+			md5_mesh ||= new Vector.<MD5MeshData>();
 			
-			var mesh : MeshData = new MeshData();
+			var mesh : MD5MeshData = new MD5MeshData();
 			
 			while(ch != "}") {
 				ch = getNextToken();
@@ -427,7 +427,7 @@ package C3.MD5
 		public var num_joints : int;
 		public var md5_joint : Vector.<MD5Joint>;
 		public var num_meshes : int;
-		public var md5_mesh : Vector.<MeshData>;
+		public var md5_mesh : Vector.<MD5MeshData>;
 		public var maxJointCount : int;
 		
 		

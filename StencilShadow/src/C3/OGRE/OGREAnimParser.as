@@ -38,6 +38,11 @@ package C3.OGRE
 						break;
 				}
 			}
+			
+			for each(var joint : OGREJoint in m_jointList){
+				joint.calc();	
+			}
+			
 			this.dispatchEvent(new Event(Event.COMPLETE));
 		}
 		
@@ -85,7 +90,9 @@ package C3.OGRE
 				childBoneName = boneParent.@bone;
 				parentBoneName = boneParent.@parent;
 				bone = m_jointCache[childBoneName];
-				if(parentBoneName == ROOT) bone.isRoot = true;
+				if(parentBoneName == ROOT) {
+					bone.isRoot = true;
+				}
 				else bone.parent = m_jointCache[parentBoneName];
 			}
 		}
@@ -114,10 +121,21 @@ package C3.OGRE
 					{
 						frameData = new OGREFrameData();
 						frameData.time = keyFrame.@time;
-						frameData.translate = new Vector3D(keyFrame[TRANSLATE].@x,keyFrame[TRANSLATE].@y,keyFrame[TRANSLATE].@z);
-						var angleData : XML = keyFrame[ROTATE][0];
-						frameData.rotate = angleData.@angle;
-						frameData.axis = new Vector3D(angleData[AXIS].@x,angleData[AXIS].@y,angleData[AXIS].@z);
+						
+						if(keyFrame.hasOwnProperty(TRANSLATE)){
+							frameData.translate = new Vector3D(keyFrame[TRANSLATE].@x,keyFrame[TRANSLATE].@y,keyFrame[TRANSLATE].@z);
+						}
+						
+						if(keyFrame.hasOwnProperty(SCALE)){
+							frameData.translate = new Vector3D(keyFrame[SCALE].@x,keyFrame[SCALE].@y,keyFrame[SCALE].@z);
+						}
+						
+						if(keyFrame.hasOwnProperty(ROTATE)){
+							var angleData : XML = keyFrame[ROTATE][0];
+							frameData.rotate = angleData.@angle;
+							frameData.axis = new Vector3D(angleData[AXIS].@x,angleData[AXIS].@y,angleData[AXIS].@z);
+						}
+						
 						frameDataList.frameData.push(frameData);
 					}
 				}
@@ -153,8 +171,12 @@ package C3.OGRE
 		private static const ROTATE : String = "rotate";
 		/**骨骼坐标系**/
 		private static const AXIS : String = "axis";
+		/**骨骼缩放**/
+		private static const SCALE : String = "scale";
 		/**动画帧信息**/
 		private static const TRACKS : String = "tracks";
+		/**无动画骨骼**/
+		private static const BIND : String = "Bind";
 		private static const TRACK : String = "track";
 		private static const KEY_FRAMES : String = "keyframes";
 		private static const KEY_FRAME : String = "keyframe";

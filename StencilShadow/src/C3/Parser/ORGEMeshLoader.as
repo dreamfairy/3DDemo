@@ -16,10 +16,11 @@ package C3.Parser
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.MeshGeoentity;
 	import C3.Material.IMaterial;
+	import C3.Material.Shaders.ShaderOgreSkeleton;
 	import C3.Material.Shaders.ShaderSimple;
-	import C3.OGRE.MeshData;
 	import C3.OGRE.OGREAnimParser;
 	import C3.OGRE.OGREMeshParser;
+	import C3.OGRE.OgreMeshData;
 	import C3.Parser.Model.IJoint;
 
 	public class ORGEMeshLoader extends MeshGeoentity
@@ -46,9 +47,11 @@ package C3.Parser
 		
 		public function loadSkeleton(uri : *) : void
 		{
-			return;
+			if(null == m_ogreSkeletonParser){
+				m_ogreSkeletonParser = new OGREAnimParser();
+				m_ogreSkeletonParser.addEventListener(Event.COMPLETE, onSkeletonLaoded);
+			}
 			
-			m_ogreSkeletonParser ||= new OGREAnimParser();
 			if(uri is ByteArray){
 				m_ogreSkeletonParser.load(uri);
 			}else if(uri is String){
@@ -73,21 +76,41 @@ package C3.Parser
 			for each(var child : Object3D in m_modelList)
 			{
 				child.render(context,camera);
-				child.shader.render(context);
+				
+				if(m_animatorSet){
+					if(m_animatorSet.shader.renderTarget != child){
+						child.shader.render(context);
+					}else{
+						m_animatorSet.render(context);
+					}
+				}else{
+					child.shader.render(context);
+				}
 			}
-			
-			if(m_animatorSet)m_animatorSet.render();
 		}
 		
 		private function onAllMeshLoaded(e:Event) : void
 		{
 			m_hasMeshData = true;
+			trace("加载完毕");
+			
+			checkAndLoadNextSkeleton();
+		}
+		
+		private function checkAndLoadNextSkeleton() : void
+		{
+			if(m_skeletonDownloadList && m_skeletonDownloadList.length){
+				m_loadState = LOAD_SKELETON;
+				var uri : String = m_skeletonDownloadList.shift();
+				loadData(uri);
+				trace("开始加载动画数据",uri);
+			}	
 		}
 		
 		private function onMeshLoaded(e:AOI3DLOADEREVENT) : void
 		{
 			var obj : Object3D = new Object3D(m_name, m_material);
-			var meshData : MeshData = e.data;
+			var meshData : OgreMeshData = e.data;
 			obj.uvRawData = meshData.getUv();
 			obj.indexRawData = meshData.getIndex();
 			obj.vertexRawData = meshData.getVertex();
@@ -104,6 +127,12 @@ package C3.Parser
 				obj.onMouseClick = onMouseClick;
 			}
 			addChild(obj);
+			
+			if(null != m_skeletonDownloadList && null == animatorset.shader){
+				animatorset.shader = new ShaderOgreSkeleton(obj);
+				animatorset.shader.material = m_material;
+				animatorset.shader.params.culling = Context3DTriangleFace.FRONT;
+			}
 		}
 		
 		private function loadData(url : String) : void
@@ -118,6 +147,15 @@ package C3.Parser
 			m_loader.load(m_urlRequest);
 		}
 		
+		private function onSkeletonLaoded(e:Event) : void
+		{
+			var state : AnimalState = animatorset.createAnimalState(m_ogreSkeletonParser.animationName);
+			state.Skeleton = m_ogreSkeletonParser;
+			animatorset.add(state);
+			
+			checkAndLoadNextSkeleton();
+		}
+		
 		private function onLoadError(e:IOErrorEvent) : void
 		{
 			trace(e.text,this);
@@ -125,7 +163,6 @@ package C3.Parser
 		
 		private function clearEvent() : void
 		{
-			return;
 			m_loader.removeEventListener(Event.COMPLETE, onLoadData);
 			m_loader.removeEventListener(IOErrorEvent.IO_ERROR, onLoadError);
 		}
@@ -140,6 +177,7 @@ package C3.Parser
 					m_ogreMeshParser.loadSkeleton(m_loader.data);
 					break;
 				case LOAD_SKELETON:
+					m_ogreSkeletonParser.load(m_loader.data);
 					break;
 			}
 		}
@@ -154,10 +192,20 @@ package C3.Parser
 			return m_ogreMeshParser.joints;
 		}
 		
+		public override function get meshDatas():*
+		{
+			return m_ogreMeshParser.ogre_mesh;
+		}
+		
 		public function addAnimalState(state : AnimalState) : void
 		{
-			m_animatorSet ||= new AnimationSet(this);
-			m_animatorSet.add(state);
+			animatorset.add(state);
+		}
+		
+		public function get animatorset() : AnimationSet
+		{
+			m_animatorSet||=new AnimationSet(this);
+			return m_animatorSet;
 		}
 
 		private var m_hasMeshData : Boolean = false;

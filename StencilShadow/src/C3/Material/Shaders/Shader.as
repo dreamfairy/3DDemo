@@ -22,6 +22,11 @@ package C3.Material.Shaders
 			m_renderTarget = renderTarget;
 		}
 		
+		public function get renderTarget() : Object3D
+		{
+			return m_renderTarget;
+		}
+		
 		public function get params() : ShaderParamters
 		{
 			return m_params;

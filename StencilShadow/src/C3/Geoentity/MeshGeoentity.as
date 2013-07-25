@@ -1,7 +1,6 @@
 package C3.Geoentity
 {
 	import C3.Object3DContainer;
-	import C3.MD5.MeshData;
 	import C3.Material.IMaterial;
 	import C3.Parser.Model.IJoint;
 
@@ -12,7 +11,7 @@ package C3.Geoentity
 			super(name,mat);
 		}
 		
-		public function get meshDatas() : Vector.<MeshData>
+		public function get meshDatas() : *
 		{
 			throw new Error("这货需要重写");
 		}

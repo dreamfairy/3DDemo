@@ -7,16 +7,30 @@ package C3.OGRE
 		public var uv_x : Number;
 		public var uv_y : Number;
 		public var pos : Vector3D;
-		/**权重开始索引**/
-		public var weight_index : Number = 0;
-		/**权重数量**/
-		public var weight_count : Number = 0;
-		/**权重值**/
-		public var weight : Number = 0;
+		
 		public var id : Number = 0;
 		public var index : uint;
 		
 		/**切线向量**/
 		public var tangent : Vector3D;
+		
+		/**对应的骨骼**/
+		public var m_boneList : Vector.<OGREVertexBoneData>;
+		
+		public function get boneList() : Vector.<OGREVertexBoneData>
+		{
+			m_boneList||=new Vector.<OGREVertexBoneData>;
+			return m_boneList;
+		}
+		
+		public function set boneList(data : Vector.<OGREVertexBoneData>)
+		{
+			m_boneList = data;
+		}
+		
+		public function get maxJoints() : uint
+		{
+			return m_boneList ? m_boneList.length : 0;
+		}
 	}
 }

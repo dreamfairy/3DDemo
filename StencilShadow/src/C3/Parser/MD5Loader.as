@@ -22,9 +22,10 @@ package C3.Parser
 	import C3.MD5.MD5MeshParser;
 	import C3.MD5.MD5Vertex;
 	import C3.MD5.MD5Weight;
-	import C3.MD5.MeshData;
+	import C3.MD5.MD5MeshData;
 	import C3.Material.IMaterial;
 	import C3.Parser.Model.IJoint;
+	import C3.Parser.Model.MeshDataBase;
 
 	public class MD5Loader extends MeshGeoentity
 	{
@@ -58,7 +59,7 @@ package C3.Parser
 		private function onMeshLoaded(event:AOI3DLOADEREVENT) : void
 		{
 			var obj : Object3D = new Object3D(m_name,m_material);
-			var meshData : MeshData = event.data;
+			var meshData : MD5MeshData = event.data;
 			obj.uvRawData = meshData.getUv();
 			obj.indexRawData = meshData.getIndex();
 			
@@ -209,7 +210,7 @@ package C3.Parser
 			return m_animator;
 		}
 		
-		public override function get meshDatas() : Vector.<MeshData>
+		public override function get meshDatas():*
 		{
 			return m_md5MeshParser.md5_mesh;
 		}

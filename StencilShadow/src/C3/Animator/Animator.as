@@ -19,7 +19,7 @@ package C3.Animator
 	import C3.MD5.MD5FrameData;
 	import C3.MD5.MD5HierarchyData;
 	import C3.MD5.MD5Joint;
-	import C3.MD5.MeshData;
+	import C3.MD5.MD5MeshData;
 	import C3.MD5.Quaternion;
 
 	public class Animator implements IDispose
@@ -147,7 +147,7 @@ package C3.Animator
 			var child : Object3D;
 			for each(child in m_model.children)
 			{
-				m_currentMeshData = child.userData.meshData as MeshData;
+				m_currentMeshData = child.userData.meshData as MD5MeshData;
 				CalcMeshAnim();
 				
 				if(!m_model.useCPU){
@@ -313,7 +313,7 @@ package C3.Animator
 		
 		private var m_currentBaseFrameData : MD5BaseFrameData;
 		private var m_currentFrameData : MD5FrameData;
-		private var m_currentMeshData : MeshData;
+		private var m_currentMeshData : MD5MeshData;
 		private var m_currentAnimGeoentity : AnimGeoentity;
 		
 		private var m_frame : int = 0;

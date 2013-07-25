@@ -2,11 +2,13 @@ package C3.MD5
 {
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
+	
+	import C3.Parser.Model.MeshDataBase;
 
 	/**
 	 * 网格数据
 	 */
-	public class MeshData
+	public class MD5MeshData extends MeshDataBase
 	{
 		public var md5_triangle : Vector.<MD5Triangle>;
 		public var md5_weight : Vector.<MD5Weight>;
@@ -16,7 +18,7 @@ package C3.MD5
 		public var num_tris : int;
 		public var num_weights : int;
 		
-		public function MeshData()
+		public function MD5MeshData()
 		{
 			md5_triangle = new Vector.<MD5Triangle>();
 			md5_weight = new Vector.<MD5Weight>();
