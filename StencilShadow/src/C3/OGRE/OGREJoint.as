@@ -3,11 +3,12 @@ package C3.OGRE
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	
+	import C3.MD5.Quaternion;
 	import C3.Parser.Model.IJoint;
 
 	public class OGREJoint implements IJoint
 	{
-		public var id : uint;
+		public var id : int;
 		public var name : String;
 		public var position : Vector3D;
 		public var angle : Number;
@@ -18,6 +19,7 @@ package C3.OGRE
 		public var frameIndex : int = 0;
 		public var frameDataList : OGREFrameList;
 		public var frameTimeList : Vector.<Number>;
+		public var quaternion : Quaternion;
 		
 		public var bindPose : Matrix3D;
 		public var inverseBindPose : Matrix3D;
@@ -33,9 +35,13 @@ package C3.OGRE
 		
 		public function calc() : void
 		{
+//			quaternion = new Quaternion();
+//			quaternion.fromAxisAngle(axis,angle);
+//			bindPose = quaternion.toMatrix3D();
+			
 			bindPose = new Matrix3D();
-			bindPose.appendTranslation(position.x,position.y,position.z);
 			bindPose.appendRotation(angle,axis);
+			bindPose.appendTranslation(position.x,position.y,position.z);
 			inverseBindPose = bindPose.clone();
 			inverseBindPose.invert();
 			

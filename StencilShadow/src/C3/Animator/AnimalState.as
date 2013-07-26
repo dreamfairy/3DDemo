@@ -8,6 +8,7 @@ package C3.Animator
 	
 	import C3.IDispose;
 	import C3.Object3D;
+	import C3.MD5.Quaternion;
 	import C3.OGRE.OGREAnimParser;
 	import C3.OGRE.OGREFrameData;
 	import C3.OGRE.OGREJoint;
@@ -119,56 +120,76 @@ package C3.Animator
 		{
 			var t : Number = tick / 1000;
 
-			var skeletonBone : Vector.<IJoint> = parent.target.joints;
-			var animationBone : Vector.<IJoint> = m_data.joints;
-			var jointsNum : int = skeletonBone.length;
+			var animationBone : Vector.<IJoint> = parent.target.joints;
+			
+			for each(var test : OGREJoint in animationBone){
+				trace(test.name,test.id,this);
+			}
+			var jointsNum : int = animationBone.length;
 			
 			m_cpuAnimMatrix||=new Vector.<Matrix3D>(jointsNum, true);
 			
 			var parentJoint : OGREJoint;
 			var currentJoint : OGREJoint;
-			var skeletonJoint : OGREJoint;
 			var currentFrameData : OGREFrameData;
 			for(var i : int = 0; i < jointsNum; i ++)
 			{
 				currentJoint = animationBone[i] as OGREJoint;
-				skeletonJoint = skeletonBone[i] as OGREJoint;
 				
 				var matrix3D : Matrix3D = new Matrix3D();
+				var quaternion : Quaternion = new Quaternion();
 				
 				if(!currentJoint.hasFrameData)
 				{
-					matrix3D.appendTranslation(currentJoint.position.x,currentJoint.position.y,currentJoint.position.z);
 					matrix3D.appendRotation(currentJoint.angle,currentJoint.axis);
-				}else{
+					matrix3D.appendTranslation(currentJoint.position.x,currentJoint.position.y,currentJoint.position.z);
 					
+//					quaternion.fromAxisAngle(currentJoint.axis,currentJoint.angle);
+//					matrix3D = quaternion.toMatrix3D();
+//					matrix3D.appendTranslation(currentJoint.position.x,currentJoint.position.y,currentJoint.position.z);
+					
+//					matrix3D = currentJoint.bindPose;
+				}else{					
 					if(t < currentJoint.getNextFrameTime(t)){
-						currentFrameData = currentJoint.currentFrameData;
+//						currentFrameData = currentJoint.currentFrameData;
+						
+//						quaternion.fromAxisAngle(currentJoint.axis,currentJoint.angle);
+//						matrix3D = quaternion.toMatrix3D();
+//						matrix3D.appendTranslation(currentJoint.position.x,currentJoint.position.y,currentJoint.position.z);
+						
+//						matrix3D = currentJoint.bindPose;
+						
+						matrix3D.appendRotation(currentJoint.angle,currentJoint.axis);
+						matrix3D.appendTranslation(currentJoint.position.x,currentJoint.position.y,currentJoint.position.z);
 					}else{
 						currentFrameData = currentJoint.nextFrameData;
-					}
-					
-					matrix3D.appendTranslation(currentFrameData.translate.x,currentFrameData.translate.y,currentFrameData.translate.z);
-					matrix3D.appendRotation(currentFrameData.rotate,currentFrameData.axis);
-					matrix3D.appendScale(currentFrameData.scale.x,currentFrameData.scale.y,currentFrameData.scale.z);
-					
-					if(currentJoint.name == "Bip01 Spine1") {
-//						trace(currentFrameData.translate.x,currentFrameData.translate.y,currentFrameData.translate.z);
+//						quaternion.fromAxisAngle(currentFrameData.axis,currentFrameData.rotate);
+//						matrix3D = quaternion.toMatrix3D();
+//						matrix3D.appendTranslation(currentFrameData.translate.x,currentFrameData.translate.y,currentFrameData.translate.z);
+						
+						matrix3D.appendRotation(currentFrameData.rotate,currentFrameData.axis);
+						matrix3D.appendTranslation(currentFrameData.translate.x,currentFrameData.translate.y,currentFrameData.translate.z);
 					}
 				}
 				
+				trace(currentJoint.name,currentJoint.id);
 				parentJoint = currentJoint.parent;
 				if(parentJoint){
+					trace("->parent" + parentJoint.name, parentJoint.id);
 					matrix3D.append(parentJoint.bindPose);
 				}
 				
 				currentJoint.bindPose = matrix3D;
 				
-				matrix3D = currentJoint.inverseBindPose.clone();
-				matrix3D.append(currentJoint.bindPose);
+//				if(currentJoint.name == "Bip01"){
+//					trace(matrix3D.rawData);
+//					trace("***********");
+//				}
+				var invMatrix : Matrix3D = currentJoint.inverseBindPose.clone();
+				invMatrix.append(matrix3D);
+//				invMatrix.invert();
 				
-//				matrix3D.invert();
-				m_cpuAnimMatrix[currentJoint.id] = matrix3D;
+				m_cpuAnimMatrix[currentJoint.id] = invMatrix;
 			}
 			
 			CalcVertex();

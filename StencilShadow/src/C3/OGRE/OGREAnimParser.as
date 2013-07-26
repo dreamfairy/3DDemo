@@ -39,11 +39,20 @@ package C3.OGRE
 				}
 			}
 			
+			m_jointList.sort(jointSortFun);
+			m_jointList.unshift(m_jointList.pop());
+			
 			for each(var joint : OGREJoint in m_jointList){
-				joint.calc();	
+				joint.calc();
+				trace("AnimParser",joint.name,joint.id);
 			}
 			
 			this.dispatchEvent(new Event(Event.COMPLETE));
+		}
+		
+		private function jointSortFun(joint1 : OGREJoint, joint2 : OGREJoint) : int
+		{
+			return joint1.id > joint2.id ? 0 : -1;
 		}
 		
 		private function parseBone(node : XML) : void

@@ -93,7 +93,7 @@ package
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
 			m_sphere.onMouseClick.add(onMouseClick);
-			m_container.addChild(m_sphere);
+//			m_container.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
