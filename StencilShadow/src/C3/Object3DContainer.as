@@ -31,19 +31,6 @@ package C3
 			m_view = value;
 		}
 		
-		/**
-		 * 只支持一个shadow mapping
-		 */
-		public override function set shadowMapping(item:IPostRender):void
-		{
-			super.shadowMapping = item;
-			
-			for each(var model : Object3D in m_modelList)
-			{
-				model.shadowMapping = item;
-			}
-		}
-		
 		public function addChild(target : Object3D) : void
 		{
 			if(target.parent) 
@@ -56,7 +43,7 @@ package C3
 //				target.pickEnabled = m_pickEnabled;
 //				target.interactive = m_interactive;
 //				target.buttonMode = m_buttonMode;
-			}	
+			}
 		}
 		
 		public function removeChild(target : Object3D, needDispose : Boolean = false) : void

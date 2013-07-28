@@ -65,5 +65,10 @@ package C3.Material.Shaders
 			context3D.setVertexBufferAt(0,m_renderTarget.vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			context3D.drawTriangles(m_renderTarget.indexBuffer,0,m_renderTarget.numTriangles);
 		}
+		
+		public override function get type():uint
+		{
+			return SKYBOX;
+		}
 	}
 }

@@ -1,9 +1,14 @@
 package C3
 {
 	import C3.Camera.Camera;
+	import C3.Core.Managers.MaterialManager;
 	import C3.Material.IMaterial;
 	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderDepthMap;
+	import C3.Material.Shaders.ShaderParamters;
+	import C3.Material.Shaders.ShaderShadowMap;
 	import C3.Mesh.MeshBase;
+	import C3.Pool.ContextCache;
 	import C3.PostRender.IPostRender;
 	
 	import com.adobe.utils.AGALMiniAssembler;
@@ -26,11 +31,6 @@ package C3
 		{
 			super(mat);
 			m_name = name;
-		}
-		
-		public function set shadowMapping(item : IPostRender) : void
-		{
-			m_shadowMap = item;
 		}
 		
 		public function get indexRawData() : Vector.<uint>
@@ -136,90 +136,100 @@ package C3
 		{
 			if(null == m_vertexRawData) return null;
 			
-			if(!m_contextBufferCache.hasOwnProperty(context))
-				m_contextBufferCache[context] = [];
+			var cache : ContextCache = hasCache(context);
 			
-			if(m_contextBufferCache.hasOwnProperty(context) &&
-				m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX])
-				return m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX];
+			if(null == cache){
+				cache = new ContextCache(context);
+				m_contextBufferCache[cache.key] = cache;
+			}
 			
-			var vertexBuffer : VertexBuffer3D = context.createVertexBuffer(m_vertexRawData.length/3,3);
-			vertexBuffer.uploadFromVector(m_vertexRawData,0,m_vertexRawData.length/3);
-			m_contextBufferCache[context][AOI3DBUFFERTYPE.VERTEX] = vertexBuffer;
-			
-			return vertexBuffer;
+			if(!cache.shaderCache.hasOwnProperty(AOI3DBUFFERTYPE.VERTEX)){
+				var vertexBuffer : VertexBuffer3D = context.createVertexBuffer(m_vertexRawData.length/3,3);
+				vertexBuffer.uploadFromVector(m_vertexRawData,0,m_vertexRawData.length/3);
+				cache.shaderCache[AOI3DBUFFERTYPE.VERTEX] = vertexBuffer;
+			}
+
+			return cache.shaderCache[AOI3DBUFFERTYPE.VERTEX];
 		}
 		
 		public function getUvBufferByContext(context : Context3D) : VertexBuffer3D
 		{
 			if(null == m_uvRawData) return null;
 			
-			if(!m_contextBufferCache.hasOwnProperty(context))
-				m_contextBufferCache[context] = [];
+			var cache : ContextCache = hasCache(context);
 			
-			if(m_contextBufferCache.hasOwnProperty(context) &&
-				m_contextBufferCache[context][AOI3DBUFFERTYPE.UV])
-				return m_contextBufferCache[context][AOI3DBUFFERTYPE.UV];
+			if(null == cache){
+				cache = new ContextCache(context);
+				m_contextBufferCache[cache.key] = cache;
+			}
 			
-			var uvBuffer : VertexBuffer3D = context.createVertexBuffer(m_uvRawData.length/2,2)
-			uvBuffer.uploadFromVector(m_uvRawData,0,m_uvRawData.length/2);
-			m_contextBufferCache[context][AOI3DBUFFERTYPE.UV] = uvBuffer;
-			
-			return uvBuffer;
+			if(!cache.shaderCache.hasOwnProperty(AOI3DBUFFERTYPE.UV)){
+				var uvBuffer : VertexBuffer3D = context.createVertexBuffer(m_uvRawData.length/2,2)
+				uvBuffer.uploadFromVector(m_uvRawData,0,m_uvRawData.length/2);
+				cache.shaderCache[AOI3DBUFFERTYPE.UV] = uvBuffer;
+			}
+
+			return cache.shaderCache[AOI3DBUFFERTYPE.UV];
 		}
 		
 		public function getIndexBufferByContext(context : Context3D) : IndexBuffer3D
 		{
 			if(null == m_indexRawData) return null;
 			
-			if(!m_contextBufferCache.hasOwnProperty(context))
-				m_contextBufferCache[context] = [];
+			var cache : ContextCache = hasCache(context);
 			
-			if(m_contextBufferCache.hasOwnProperty(context) &&
-				m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX])
-				return m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX];
+			if(null == cache){
+				cache = new ContextCache(context);
+				m_contextBufferCache[cache.key] = cache;
+			}
 			
-			var indexBuffer : IndexBuffer3D = context.createIndexBuffer(m_indexRawData.length);
-			indexBuffer.uploadFromVector(m_indexRawData,0,m_indexRawData.length);
-			m_contextBufferCache[context][AOI3DBUFFERTYPE.INDEX] = indexBuffer;
+			if(!cache.shaderCache.hasOwnProperty(AOI3DBUFFERTYPE.INDEX)){
+				var indexBuffer : IndexBuffer3D = context.createIndexBuffer(m_indexRawData.length);
+				indexBuffer.uploadFromVector(m_indexRawData,0,m_indexRawData.length);
+				cache.shaderCache[AOI3DBUFFERTYPE.INDEX] = indexBuffer;
+			}
 			
-			return indexBuffer;
+			return cache.shaderCache[AOI3DBUFFERTYPE.INDEX];
 		}
 		
 		public function getJointIndexBufferByContext(context : Context3D) : VertexBuffer3D
 		{
 			if(null == m_jointIndexRawData) return null;
 			
-			if(!m_contextBufferCache.hasOwnProperty(context))
-				m_contextBufferCache[context] = [];
+			var cache : ContextCache = hasCache(context);
 			
-			if(m_contextBufferCache.hasOwnProperty(context) &&
-				m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX])
-				return m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX];
+			if(null == cache){
+				cache = new ContextCache(context);
+				m_contextBufferCache[cache.key] = cache;
+			}
 			
-			var jointIndexBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
-			jointIndexBuffer.uploadFromVector(m_jointIndexRawData,0,m_jointIndexRawData.length/userData.maxJoints);
-			m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_INDEX] = jointIndexBuffer;
+			if(!cache.shaderCache.hasOwnProperty(AOI3DBUFFERTYPE.JOINT_INDEX)){
+				var jointIndexBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointIndexRawData.length/userData.maxJoints, userData.maxJoints);
+				jointIndexBuffer.uploadFromVector(m_jointIndexRawData,0,m_jointIndexRawData.length/userData.maxJoints);
+				cache.shaderCache[AOI3DBUFFERTYPE.JOINT_INDEX] = jointIndexBuffer;
+			}
 			
-			return jointIndexBuffer;
+			return cache.shaderCache[AOI3DBUFFERTYPE.JOINT_INDEX];
 		}
 		
 		public function getJointWeightBufferByContext(context : Context3D) : VertexBuffer3D
 		{
 			if(null == m_jointWeightRawData) return null;
 			
-			if(!m_contextBufferCache.hasOwnProperty(context))
-				m_contextBufferCache[context] = [];
+			var cache : ContextCache = hasCache(context);
 			
-			if(m_contextBufferCache.hasOwnProperty(context) &&
-				m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT])
-				return m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT];
+			if(null == cache){
+				cache = new ContextCache(context);
+				m_contextBufferCache[cache.key] = cache;
+			}
 			
-			var jointWeightBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
-			jointWeightBuffer.uploadFromVector(m_jointWeightRawData,0,m_jointWeightRawData.length/userData.maxJoints);
-			m_contextBufferCache[context][AOI3DBUFFERTYPE.JOINT_WEIGHT] = jointWeightBuffer;
+			if(!cache.shaderCache.hasOwnProperty(AOI3DBUFFERTYPE.JOINT_WEIGHT)){
+				var jointWeightBuffer : VertexBuffer3D = context.createVertexBuffer(m_jointWeightRawData.length/userData.maxJoints, userData.maxJoints);
+				jointWeightBuffer.uploadFromVector(m_jointWeightRawData,0,m_jointWeightRawData.length/userData.maxJoints);
+				cache.shaderCache[AOI3DBUFFERTYPE.JOINT_WEIGHT] = jointWeightBuffer;
+			}
 			
-			return jointWeightBuffer;
+			return cache.shaderCache[AOI3DBUFFERTYPE.JOINT_WEIGHT];
 		}
 		
 		/**
@@ -346,35 +356,47 @@ package C3
 			}
 			m_finalMatrix.append(camera.viewProjMatrix);
 			
-			return;
-			//渲染材质
-			if(!m_program)
-				createProgram(m_context);
+			updateShader(context);
+		}
+		
+		public function updateShader(context : Context3D) : void
+		{
+			var shader : Shader;
 			
-			m_context.setProgram(m_program);
+			for each(shader in m_shaderList){
+				shader.render(context);
+			}
 			
-			/**
-			 * 如果有阴影图，且阴影图未绘制完毕，则不需要创建自己的纹理
-			 * 如果没有阴影图，或者阴影图绘制完毕，绘制自己的纹理
-			 */
-			if(!m_shadowMap || m_shadowMap.hasPassDoen)
-				m_context.setTextureAt(0,m_material.getTexture(m_context));
+			var shaderDepth : ShaderDepthMap;
+			if(castShadow){
+				shaderDepth = MaterialManager.getShader(Shader.DEPTH_MAP, context) as ShaderDepthMap;
+				shaderDepth.addTarget(this);
+			}else{
+				shaderDepth = MaterialManager.getShader(Shader.DEPTH_MAP, context) as ShaderDepthMap;
+				shaderDepth.removeTarget(this);
+			}
 			
-			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,0,m_material.getMatrialData());
-			
-			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 124, m_finalMatrix, true);
-			
-			m_context.setVertexBufferAt(0, m_vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-			m_context.setVertexBufferAt(1,m_uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
-			
-//			if(m_normalBuffer)
-//				View.context.setVertexBufferAt(2,m_normalBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
-			
-			m_context.drawTriangles(m_indexBuffer,0,m_numTriangles);
-			
-			m_context.setTextureAt(0, null);
-			m_context.setVertexBufferAt(0, null);
-			m_context.setVertexBufferAt(1, null);
+			var shaderShadow : ShaderShadowMap;
+			if(receiveShadow){
+				if(!m_shaderList.hasOwnProperty(Shader.SHADOW_MAP)){
+					shaderShadow = MaterialManager.getShader(Shader.SHADOW_MAP, context) as ShaderShadowMap;
+					shaderShadow.addTarget(this);
+					setShader(shaderShadow);
+				}
+				
+				if(m_shaderList.hasOwnProperty(Shader.SIMPLE))
+					m_shaderList[Shader.SIMPLE].enabled = false;
+				
+			}else{
+				if(m_shaderList.hasOwnProperty(Shader.SHADOW_MAP)){
+					shaderShadow = MaterialManager.getShader(Shader.SHADOW_MAP, context) as ShaderShadowMap;
+					shaderShadow.removeTarget(this);
+					setShader(shaderShadow,true);
+				}
+				
+				if(m_shaderList.hasOwnProperty(Shader.SIMPLE))
+					m_shaderList[Shader.SIMPLE].enabled = true;
+			}
 		}
 		
 		public function get camera() : Camera
@@ -382,24 +404,9 @@ package C3
 			return m_camera;
 		}
 		
-		/**
-		 * 内部构建一个Program
-		 * v0 为 uv
-		 * 从材质获取FragmentStr
-		 */
-		protected function createProgram(context3D : Context3D) : void
+		public function set camera(camera : Camera) : void
 		{
-			var vertexProgram : AGALMiniAssembler = new AGALMiniAssembler();
-			vertexProgram.assemble(Context3DProgramType.VERTEX,
-				"m44 op, va0, vc124\n"+
-				"mov v0, va1");
-			
-			var fragementProgram : AGALMiniAssembler = new AGALMiniAssembler();
-			fragementProgram.assemble(Context3DProgramType.FRAGMENT,
-				m_material.getFragmentStr(m_shadowMap));
-			
-			m_program = context3D.createProgram();
-			m_program.upload(vertexProgram.agalcode,fragementProgram.agalcode);
+			m_camera = camera;
 		}
 		
 		public function get numTriangles() : uint
@@ -437,6 +444,7 @@ package C3
 			super.dispose();
 			m_camera = null;
 			m_context = null;
+			m_shaderList = null;
 			
 			onMouseClick.removeAll();
 			onMouseClick = null;
@@ -502,21 +510,41 @@ package C3
 			return m_finalMatrix;
 		}
 		
-		public function get shader() : Shader
+		public function get modelMatrix() : Matrix3D
 		{
-			return m_shader;
+			if(m_transformDirty)
+				updateTransform();
+			
+			return m_transform;
 		}
 		
-		public function set shader(value : Shader) : void
+		public function getShader(type : uint) : Shader
 		{
-			m_shader = value;
+			return m_shaderList[type];
 		}
 		
-		/**
-		 * 骨骼部分，以后再拆分
-		 */
-		public function getSkeleton() : *
+		public function setShader(value : Shader, remove : Boolean = false) : void
 		{
+			if(remove)
+				delete m_shaderList[value.type];
+				
+			if(!m_shaderList.hasOwnProperty(value.type))
+				m_shaderList[value.type] = value;
+		}
+		
+		public function setContext(context : Context3D) : void
+		{
+			m_context = context;
+		}
+		
+		
+		private function hasCache(context : Context3D) : ContextCache
+		{
+			var cache : ContextCache;
+			for each(cache in m_contextBufferCache){
+				if(cache.context == context) return cache;
+			}
+			
 			return null;
 		}
 		
@@ -538,7 +566,6 @@ package C3
 		protected var m_parent : Object3DContainer;
 		protected var m_numTriangles : uint;
 		protected var m_program : Program3D;
-		protected var m_shadowMap : IPostRender;
 		
 		protected var m_uvBuffer : VertexBuffer3D;
 		protected var m_vertexBuffer : VertexBuffer3D;
@@ -556,7 +583,7 @@ package C3
 		
 		protected var m_camera : Camera;
 		protected var m_context : Context3D;
-		protected var m_shader : Shader;
+		protected var m_shaderList : Dictionary = new Dictionary();
 		
 		/**
 		 * 鼠标事件
@@ -565,5 +592,16 @@ package C3
 		public var onMouseUp : Signal = new Signal(Event);
 		public var onMouseDown : Signal = new Signal(Event);
 		public var onMouseMove : Signal = new Signal(Event);
+		
+		/**
+		 * 投影
+		 */
+		public var castShadow : Boolean = false;
+		public var receiveShadow : Boolean = false;
+		
+		/**
+		 * 特殊渲染选项
+		 */
+		public var shaderParams : ShaderParamters;
 	}
 }

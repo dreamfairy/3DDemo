@@ -1,5 +1,20 @@
 package C3.Parser
 {
+	import C3.Animator.AnimalState;
+	import C3.Animator.AnimationSet;
+	import C3.Camera.Camera;
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Geoentity.MeshGeoentity;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.ShaderOgreSkeleton;
+	import C3.Material.Shaders.ShaderParamters;
+	import C3.Material.Shaders.ShaderSimple;
+	import C3.OGRE.OGREAnimParser;
+	import C3.OGRE.OGREMeshParser;
+	import C3.OGRE.OgreMeshData;
+	import C3.Object3D;
+	import C3.Parser.Model.IJoint;
+	
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
@@ -8,20 +23,6 @@ package C3.Parser
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
-	
-	import C3.Object3D;
-	import C3.Animator.AnimalState;
-	import C3.Animator.AnimationSet;
-	import C3.Camera.Camera;
-	import C3.Event.AOI3DLOADEREVENT;
-	import C3.Geoentity.MeshGeoentity;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.ShaderOgreSkeleton;
-	import C3.Material.Shaders.ShaderSimple;
-	import C3.OGRE.OGREAnimParser;
-	import C3.OGRE.OGREMeshParser;
-	import C3.OGRE.OgreMeshData;
-	import C3.Parser.Model.IJoint;
 
 	public class ORGEMeshLoader extends MeshGeoentity
 	{
@@ -32,6 +33,10 @@ package C3.Parser
 			m_ogreMeshParser.addEventListener(Event.COMPLETE, onAllMeshLoaded);
 			m_ogreMeshParser.addEventListener(AOI3DLOADEREVENT.ON_MESH_LOADED, onMeshLoaded);
 			m_ogreMeshParser.addEventListener(AOI3DLOADEREVENT.REQUEST_SKELETON, requestSkeleton);
+			
+			shaderParams = new ShaderParamters();
+			shaderParams.culling = Context3DTriangleFace.FRONT;
+			shaderParams.updateList = ["culling"];
 		}
 		
 		public function loadMesh(uri : *) : void
@@ -77,15 +82,15 @@ package C3.Parser
 			{
 				child.render(context,camera);
 				
-				if(m_animatorSet){
-					if(m_animatorSet.shader.renderTarget != child){
-						child.shader.render(context);
-					}else{
-						m_animatorSet.render(context);
-					}
-				}else{
-					child.shader.render(context);
-				}
+//				if(m_animatorSet){
+//					if(m_animatorSet.shader.renderTarget != child){
+//						child.shader.render(context);
+//					}else{
+//						m_animatorSet.render(context);
+//					}
+//				}else{
+//					child.shader.render(context);
+//				}
 			}
 		}
 		
@@ -115,13 +120,19 @@ package C3.Parser
 			obj.indexRawData = meshData.getIndex();
 			obj.vertexRawData = meshData.getVertex();
 			obj.numTriangles = meshData.ogre_numTriangle;
-			obj.shader = new ShaderSimple(obj);
-			obj.shader.material = m_material;
-			obj.shader.params.culling = Context3DTriangleFace.FRONT;
+			
+			var shader : ShaderSimple = new ShaderSimple(obj);
+			shader.material = m_material;
+			shader.params.culling = Context3DTriangleFace.FRONT;
+			obj.setShader(shader);
 			
 			obj.pickEnabled = m_pickEnabled;
 			obj.interactive = m_interactive;
 			obj.buttonMode = m_buttonMode;
+			obj.castShadow = castShadow;
+			obj.receiveShadow = receiveShadow;
+			
+			obj.shaderParams = shaderParams;
 			
 			if(onMouseClick.numListeners){
 				obj.onMouseClick = onMouseClick;

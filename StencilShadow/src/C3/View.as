@@ -1,16 +1,27 @@
 package C3
 {
+	import C3.Camera.Camera;
+	import C3.Core.Managers.MaterialManager;
+	import C3.Core.Managers.PickManager;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderDepthMap;
+	import C3.Mesh.SkyBox.SkyBoxBase;
+	import C3.PostRender.IPostRender;
+	
+	import com.adobe.utils.AGALMiniAssembler;
+	
+	import flash.display.BitmapData;
+	import flash.display.ShaderData;
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DProgramType;
+	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.display3D.Program3D;
+	import flash.display3D.textures.TextureBase;
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
-	
-	import C3.Camera.Camera;
-	import C3.Core.Managers.PickManager;
-	import C3.Mesh.SkyBox.SkyBoxBase;
-	import C3.PostRender.IPostRender;
 
 	public class View extends Sprite implements IDispose
 	{
@@ -32,6 +43,11 @@ package C3
 			m_pickManager = new PickManager(this);
 			
 			addEventListener(Event.ADDED_TO_STAGE, addedToStage);
+		}
+		
+		public function get camera() : Camera
+		{
+			return m_camera;
 		}
 		
 		private function addedToStage(e:Event) : void
@@ -57,27 +73,23 @@ package C3
 			m_context.enableErrorChecking = m_enableErrorCheck;
 			contextList[0] = m_context;
 			
-			setup();
-			
 			m_renderablle = true;
-		}
-		
-		private var m_cube : CubeMesh;
-		private function setup() : void
-		{
-			m_cube = new CubeMesh(m_context);
 		}
 		
 		public function render() : void
 		{
 			if(!m_renderablle) return;
 			
+			onBeforeRender();
 			m_context.clear();
-			postProcessing(true);
+			
+//			renderQuadShow();
 			m_rootContainer.render(m_context, m_camera);
-			postProcessing(false);
+			
 			m_context.present();
+			
 			m_pickManager.render(m_camera);
+			
 			onAfterRender();
 		}
 		
@@ -86,20 +98,20 @@ package C3
 			return m_camera;
 		}
 		
+		private function onBeforeRender() : void
+		{
+			m_context.clear();
+			
+			var list : Vector.<Shader> = MaterialManager.beforeRenderShaderList;
+			var shader : Shader;
+			for each(shader in list){
+				shader.render(m_context);
+			}
+		}
+		
 		private function onAfterRender() : void
 		{
 			
-		}
-		
-		/**
-		 * 后期渲染
-		 */
-		private function postProcessing(before : Boolean) : void
-		{
-			for each(var item : IPostRender in m_postRenderList)
-			{
-//				before?item.renderBefore():item.renderAfter();
-			}
 		}
 		
 		/**
@@ -180,6 +192,124 @@ package C3
 			m_modelList = null;
 		}
 		
+		public function get depthBMD() : BitmapData
+		{
+			if(m_context)
+				return ShaderDepthMap(MaterialManager.getShader(Shader.DEPTH_MAP,m_context)).bmd;
+			
+			return null;
+		}
+		
+		/**
+		 * 看看深度图长啥样
+		 */
+		private var m_showQuad : QuadInfo;
+		private var m_viewMatrix : Matrix3D = new Matrix3D();
+		private var m_finalMatrix : Matrix3D = new Matrix3D();
+		private function renderQuadShow() : void
+		{
+			var list : Vector.<Shader> = MaterialManager.beforeRenderShaderList;
+			if(!list.length) return;
+			
+			for each(var taget : Object3D in Object3DContainer(m_rootContainer.children[0]).children)
+			{
+				taget.camera = m_camera;
+				taget.setContext(m_context);
+				taget.updateShader(m_context);
+			}
+				
+			m_context.clear(.3,.3,.3);
+			
+			m_showQuad||=createQuad("xx");
+			
+			var m_shaderMap : TextureBase = MaterialManager.getShader(Shader.DEPTH_MAP,m_context).material.getTexture(m_context);
+			m_context.setTextureAt(0, m_shaderMap);
+			m_context.setProgram(shadowShader);
+			
+			m_showQuad.transform.identity();
+			m_showQuad.transform.appendScale(10,10,10);
+			m_showQuad.transform.appendTranslation(0,0,0);
+			
+			m_viewMatrix.identity();
+			m_viewMatrix.appendTranslation(0,0,-30);
+			
+			m_finalMatrix.identity();
+			m_finalMatrix.append(m_showQuad.transform);
+			m_finalMatrix.append(m_viewMatrix);
+			m_finalMatrix.append(m_camera.projectMatrix);
+			
+			m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,0,m_finalMatrix,true);
+			m_context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, Vector.<Number>([60, 1, 0, 0]));
+			m_context.setVertexBufferAt(0,m_showQuad.vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
+			m_context.setVertexBufferAt(1,m_showQuad.uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
+			m_context.drawTriangles(m_showQuad.indexBuffer);
+			
+			m_context.setTextureAt(0, null);
+			m_context.setVertexBufferAt(0,null);
+			m_context.setVertexBufferAt(1,null);
+		}
+		
+		private var m_depthShader : Program3D;
+		private function get shadowShader() : Program3D
+		{
+			if(m_depthShader) return m_depthShader;
+			
+			var vertexStr : String = "m44 vt0, va0, vc0\n"+
+				"mov op, vt0\n"+
+				"mov v0, va1\n"+
+				"mov v1, vt0\n";
+			
+			var vertexProgram : AGALMiniAssembler = new AGALMiniAssembler();
+			vertexProgram.assemble(Context3DProgramType.VERTEX,vertexStr);
+			
+			var fragmentStr : String = "tex ft0 v0 fs0\n"+
+				"mov oc, ft0\n";
+			
+			var fragtmentProgram : AGALMiniAssembler = new AGALMiniAssembler();
+			fragtmentProgram.assemble(Context3DProgramType.FRAGMENT,fragmentStr);
+			
+			m_depthShader = m_context.createProgram();
+			m_depthShader.upload(vertexProgram.agalcode,fragtmentProgram.agalcode);
+			
+			return m_depthShader;
+		}
+		
+		private function createQuad(name : String) : QuadInfo
+		{
+			var vertexList : Vector.<Number> = new Vector.<Number>();
+			vertexList.push(-1,1,0);
+			vertexList.push(1,1,0);
+			vertexList.push(1,-1,0);
+			vertexList.push(-1,-1,0);
+			
+			var indexList : Vector.<uint> = new Vector.<uint>();
+			indexList.push(0,1,2);
+			indexList.push(0,2,3);
+			
+			var uvList : Vector.<Number> = new Vector.<Number>();
+			uvList.push(0,0,1,0,1,1,0,1);
+			
+			var normalList : Vector.<Number> = new Vector.<Number>();
+			normalList.push(0,0,0,0,0,0,0,0,0,0,0,0);
+			
+			var quad : QuadInfo = new QuadInfo();
+			quad.name = name;
+			
+			quad.vertexBuffer = m_context.createVertexBuffer(4,3);
+			quad.vertexBuffer.uploadFromVector(vertexList,0,4);
+			
+			quad.indexBuffer = m_context.createIndexBuffer(6);
+			quad.indexBuffer.uploadFromVector(indexList,0,6);
+			
+			quad.uvBuffer = m_context.createVertexBuffer(4,2);
+			quad.uvBuffer.uploadFromVector(uvList,0,4);
+			
+			quad.normalBuffer = m_context.createVertexBuffer(4,3);
+			quad.normalBuffer.uploadFromVector(normalList,0,4);
+			
+			return quad;
+		}
+		
 		private var m_pickManager : PickManager;
 		
 		private var m_camera : Camera;
@@ -198,4 +328,18 @@ package C3
 		
 		public static var contextList : Vector.<Context3D> = new Vector.<Context3D>(3,true);
 	}
+}
+
+import flash.display3D.IndexBuffer3D;
+import flash.display3D.VertexBuffer3D;
+import flash.geom.Matrix3D;
+
+class QuadInfo
+{
+	public var name : String;
+	public var vertexBuffer : VertexBuffer3D;
+	public var indexBuffer : IndexBuffer3D;
+	public var uvBuffer : VertexBuffer3D;
+	public var normalBuffer : VertexBuffer3D;
+	public var transform : Matrix3D = new Matrix3D();
 }

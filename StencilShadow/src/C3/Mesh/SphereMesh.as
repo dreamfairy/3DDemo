@@ -1,11 +1,12 @@
 package C3.Mesh
 {
-	import flash.display3D.Context3D;
-	
-	import C3.Object3D;
 	import C3.Camera.Camera;
 	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
 	import C3.Material.Shaders.ShaderSimple;
+	import C3.Object3D;
+	
+	import flash.display3D.Context3D;
 	
 	public class SphereMesh extends Object3D
 	{
@@ -102,14 +103,14 @@ package C3.Mesh
 			m_numTriangles = computeNumTris(slices,stacks)/3;
 			
 			//创建Shader
-			m_shader = new ShaderSimple(this);
-			m_shader.material = mat;
+			var shader : ShaderSimple = new ShaderSimple(this);
+			shader.material = mat;
+			setShader(shader);
 		}
 		
 		public override function render(context:Context3D, camera:Camera):void
 		{
 			super.render(context,camera);
-			m_shader.render(context);
 		}
 		
 		public static function computeNumTris(slices : uint, stacks : uint) : uint

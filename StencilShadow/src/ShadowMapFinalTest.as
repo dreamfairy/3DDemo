@@ -28,7 +28,7 @@ package
 	/**
 	 * 这次肯定能写出来了
 	 */
-	[SWF(width = "512", height = "512", frameRate="60")]
+	[SWF(width = "800", height = "800", frameRate="60")]
 	public class ShadowMapFinalTest extends ContextBase
 	{
 		public function ShadowMapFinalTest()
@@ -146,23 +146,17 @@ package
 			//模型深度图采样shader
 			var modelVertexShader : AGALMiniAssembler = new AGALMiniAssembler();
 			modelVertexShader.assemble(Context3DProgramType.VERTEX,
-				//投影到场景相机
+				//投影到场景相机 modelViewProj
 				"m44 vt0 va0 vc0\n"+
-				//投影到场景灯光相机
-				"m44 vt1 va0 vc4\n"+
 				//投影到 modelToWorld
 				"m44 vt2 va0 vc20\n"+
 				//投影到 lightViewToProj
 				"m44 vt3 vt2 vc12\n"+
 				
-				"mov v0 vt0\n"+
-				"mov v1 vt1\n"+
 				"mov v2 vt3\n"+
-				
 				//uv
 				"mov v3 va2\n"+
 				//worldPos
-				"mov v4 vt2\n"+
 				"mov op vt0\n");
 			
 			var modelFragmentShader : AGALMiniAssembler = new AGALMiniAssembler();

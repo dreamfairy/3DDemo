@@ -1,5 +1,11 @@
 package C3.Mesh.SkyBox
 {
+	import C3.Camera.Camera;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderSkyBox;
+	import C3.Object3D;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -7,12 +13,6 @@ package C3.Mesh.SkyBox
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
-	
-	import C3.Object3D;
-	import C3.Camera.Camera;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.Shader;
-	import C3.Material.Shaders.ShaderSkyBox;
 	
 	public class SkyBoxBase extends Object3D
 	{
@@ -63,8 +63,9 @@ package C3.Mesh.SkyBox
 			m_numTriangles = indexList.length/3;
 			indexRawData = indexList;
 			
-			m_shader = new ShaderSkyBox(this);
-			m_shader.material = m_material;
+			var shader : ShaderSkyBox = new ShaderSkyBox(this);
+			shader.material = m_material;
+			setShader(shader);
 		}
 		
 		public override function render(context:Context3D, camera:Camera):void
@@ -77,24 +78,9 @@ package C3.Mesh.SkyBox
 			if(m_transformDirty)
 				updateTransform();
 			
-			m_shader.render(context);
-		}
-		
-		protected override function createProgram(context3D:Context3D):void
-		{
-			var vertexProgram : AGALMiniAssembler = new AGALMiniAssembler();
-			vertexProgram.assemble(Context3DProgramType.VERTEX,
-				"m44 op va0 vc124\n"+
-				"nrm vt0.xyz va0.xyz\n"+
-				"mov vt0.w vc0.x\n"+
-				"mov v0 vt0\n");
-			
-			var fragmentProgram : AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentProgram.assemble(Context3DProgramType.FRAGMENT,
-				m_material.getFragmentStr(null));
-			
-			m_program = context3D.createProgram();
-			m_program.upload(vertexProgram.agalcode,fragmentProgram.agalcode);
+			for each(var shader : Shader in m_shaderList){
+				shader.render(context);
+			}
 		}
 		
 		private var m_size : int;

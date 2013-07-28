@@ -1,6 +1,28 @@
 package
 {
+	import C3.AOI3DAXIS;
+	import C3.Core.Managers.MaterialManager;
+	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Event.MouseEvent3D;
+	import C3.Geoentity.AnimGeoentity;
+	import C3.Material.CubeMaterial;
+	import C3.Material.DDSTextureMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.TextureMaterial;
+	import C3.Mesh.PlaneMesh;
+	import C3.Mesh.SkyBox.SkyBoxBase;
+	import C3.Mesh.SphereMesh;
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	import C3.Parser.DDSParser;
+	import C3.Parser.MD5AnimLoader;
+	import C3.Parser.MD5Loader;
+	import C3.Parser.OGREAnimLoader;
+	import C3.Parser.ORGEMeshLoader;
+	import C3.View;
+	
 	import flash.display.Bitmap;
+	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
@@ -8,25 +30,6 @@ package
 	import flash.filters.GlowFilter;
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
-	
-	import C3.AOI3DAXIS;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	import C3.View;
-	import C3.Event.AOI3DLOADEREVENT;
-	import C3.Event.MouseEvent3D;
-	import C3.Geoentity.AnimGeoentity;
-	import C3.Material.CubeMaterial;
-	import C3.Material.DDSTextureMaterial;
-	import C3.Material.TextureMaterial;
-	import C3.Mesh.PlaneMesh;
-	import C3.Mesh.SphereMesh;
-	import C3.Mesh.SkyBox.SkyBoxBase;
-	import C3.Parser.DDSParser;
-	import C3.Parser.MD5AnimLoader;
-	import C3.Parser.MD5Loader;
-	import C3.Parser.OGREAnimLoader;
-	import C3.Parser.ORGEMeshLoader;
 
 	[SWF(width = "600", height = "600", frameRate="60")]
 	public class ShadowMapTest extends Sprite
@@ -43,7 +46,10 @@ package
 			
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
 			addChild(m_view);
-			addChild(new Stats());
+//			addChild(new Stats());
+			
+			m_bitmap = new Bitmap();
+			addChild(m_bitmap);
 			
 			m_skyBox = new SkyBoxBase("sky", new CubeMaterial(skyData));
 			m_view.skyBox = m_skyBox;
@@ -68,6 +74,8 @@ package
 			bottomPlane.pickEnabled = true;
 			bottomPlane.interactive = true;
 			bottomPlane.buttonMode = true;
+			bottomPlane.receiveShadow = true;
+			bottomPlane.castShadow = true;
 			bottomPlane.onMouseClick.add(onMouseClick);
 			m_container.addChild(bottomPlane);
 			
@@ -76,6 +84,8 @@ package
 			backPlane.pickEnabled = true;
 			backPlane.interactive = true;
 			backPlane.buttonMode = true;
+			backPlane.castShadow = true;
+			backPlane.receiveShadow = true;
 			backPlane.onMouseClick.add(onMouseClick);
 			m_container.addChild(backPlane);
 			
@@ -92,34 +102,29 @@ package
 			m_sphere.pickEnabled = true;
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
+			m_sphere.castShadow = true;
+			m_sphere.receiveShadow = true;
 			m_sphere.onMouseClick.add(onMouseClick);
-//			m_container.addChild(m_sphere);
+			m_container.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
 			m_ogreModel.pickEnabled = m_ogreModel.interactive = m_ogreModel.buttonMode = true;
 			m_ogreModel.onMouseClick.add(onMouseClick);
-			m_ogreModel.animatorset.onStateLoaded.add(onAnimalStateLoaded);
-			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
+			m_ogreModel.castShadow = true;
+			m_ogreModel.receiveShadow = true;
 			m_container.addChild(m_ogreModel);
 			
 //			loadAnim();
 			
 			m_view.scene.addChild(m_container);
+			m_view.camera.setGlobalLightTarget(0,0,-20);
+			m_view.camera.setGlobalLightPos(10,5,0);
 			
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 			this.addEventListener(Event.ENTER_FRAME, onEnter);
-		}
-		
-		private function onAnimalStateLoaded(actionName : String) : void
-		{
-			switch(actionName){
-				case "Walk":
-					m_ogreModel.animatorset.getState(actionName).play();
-					break;
-			}
 		}
 		
 		private function onKeyDown(e:KeyboardEvent) : void
@@ -162,6 +167,8 @@ package
 			renderKeyboard();
 			m_sphere.rotateX = -t;
 //			m_container.rotateY = t;
+			
+			m_bitmap.bitmapData = m_view.depthBMD;
 		}
 		
 		private function renderKeyboard() : void
@@ -183,6 +190,14 @@ package
 			
 			if(m_key[Keyboard.RIGHT])
 				m_container.rotateY -= .5;
+			
+			if(m_key[Keyboard.A])
+				m_view.getCamera().strafe(.5);
+			
+			if(m_key[Keyboard.D])
+				m_view.getCamera().strafe(-.5);
+			
+			m_view.getCamera().setTarget(m_container.x,m_container.y,m_container.z);
 		}
 		
 		private function onMouseWheel(e:MouseEvent) : void

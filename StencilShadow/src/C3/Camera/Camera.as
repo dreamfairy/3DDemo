@@ -1,5 +1,10 @@
 package C3.Camera
 {
+	import C3.AABB;
+	import C3.IDispose;
+	import C3.TeapotMesh;
+	import C3.View;
+	
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
 	import flash.display.Stage;
@@ -7,10 +12,6 @@ package C3.Camera
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
-	
-	import C3.IDispose;
-	import C3.TeapotMesh;
-	import C3.View;
 
 	public class Camera implements IDispose
 	{
@@ -109,11 +110,7 @@ package C3.Camera
 			//dir = viewDir * near + rightDir * rightOffset + readlUpDir * upOffset
 //			intoDir.x = m_look.x * zNear + 
 		}**/
-		
-		public function target(target : TeapotMesh) : void
-		{
-			m_target = target;
-		}
+	
 		
 		public function unproject(x : Number, y : Number, z : Number) : Vector3D
 		{
@@ -268,6 +265,8 @@ package C3.Camera
 			rawData[15] = 1;
 
 			m_transform.copyRawDataFrom(rawData);
+			
+			m_transform.pointAt(m_target,CAM_FACING,CAM_UP);
 
 			return m_transform;
 		}
@@ -291,6 +290,11 @@ package C3.Camera
 		public function setLook(x : Number, y : Number, z : Number) : void
 		{
 			m_look.setTo(x,y,z);
+		}
+		
+		public function setTarget(x : Number, y : Number, z : Number) : void
+		{
+			m_target.setTo(x,y,z);
 		}
 		
 		public function setCameraType(type : uint) : void
@@ -335,9 +339,45 @@ package C3.Camera
 			return viewProj;
 		}
 		
+		public function setGlobalLightPos(vx : Number, vy : Number, vz : Number) : void
+		{
+			GlobalLightPos.setTo(vx,vy,vz);
+		}
+		
+		public function setGlobalLightTarget(vx : Number, vy : Number, vz : Number) : void
+		{
+			GlobalLightTarget.setTo(vx,vy,vz);
+		}
+		
+		public function get lightProjection() : Matrix3D
+		{
+			m_lightMatrix||=new Matrix3D();
+			
+			m_lightMatrix.identity();
+			m_lightMatrix.appendTranslation(GlobalLightPos.x,GlobalLightPos.y,GlobalLightPos.z);
+			m_lightMatrix.pointAt(GlobalLightTarget,CAM_FACING,CAM_UP);
+			m_lightMatrix.invert();
+			m_lightMatrix.append(m_proj);
+			
+			return m_lightMatrix;
+		}
+		
 		public function dispose():void
 		{
-			//以后再说
+			m_lightPos = null;
+			m_lightMatrix = null;
+		}
+		
+		private function get GlobalLightPos() : Vector3D
+		{
+			m_lightPos||=new Vector3D();
+			return m_lightPos;
+		}
+		
+		private function get GlobalLightTarget() : Vector3D
+		{
+			m_lightTarget||=new Vector3D();
+			return m_lightTarget;
 		}
 		
 		public static const CAM_FACING:Vector3D = new Vector3D(0, 0, -1);
@@ -355,9 +395,9 @@ package C3.Camera
 		private var m_up : Vector3D = new Vector3D(0,1,0);
 		private var m_look : Vector3D = new Vector3D(0,0,1);
 		private var m_pos : Vector3D = new Vector3D(0,0,0);
+		private var m_target : Vector3D = new Vector3D();
 		private var m_parent : View;
 		private var m_type : uint;
-		private var m_target : TeapotMesh;
 		
 		//投影矩阵
 		private var m_proj : PerspectiveMatrix3D = new PerspectiveMatrix3D();
@@ -365,11 +405,16 @@ package C3.Camera
 		//视图区域
 		private var m_viewPort : Rectangle;
 		private var m_zNear : Number = 1;
-		private var m_zFar : Number = 5000;
+		private var m_zFar : Number = 1000;
 		private var m_fov : Number = 45;
 		
 		//替换的相机矩阵
 		private var m_replaceMatrix : Matrix3D;
+		
+		//全局灯光
+		private var m_lightTarget : Vector3D;
+		private var m_lightPos : Vector3D;
+		private var m_lightMatrix : Matrix3D;
 		
 		public static var TEMP_FINAL_MATRIX : Matrix3D = new Matrix3D();
 		

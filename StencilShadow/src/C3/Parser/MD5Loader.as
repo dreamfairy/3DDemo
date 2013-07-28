@@ -159,8 +159,8 @@ package C3.Parser
 			updateMaterial();
 			
 			//渲染材质
-			if(!m_program)
-				createProgram(m_context);
+//			if(!m_program)
+//				createProgram(m_context);
 			
 			context.setProgram(m_program);
 			

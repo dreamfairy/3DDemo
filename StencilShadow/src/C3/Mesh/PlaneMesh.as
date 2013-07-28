@@ -1,14 +1,18 @@
 package C3.Mesh
 {
+	import C3.AOI3DAXIS;
+	import C3.Camera.Camera;
+	import C3.Core.Managers.MaterialManager;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderParamters;
+	import C3.Material.Shaders.ShaderSimple;
+	import C3.Object3D;
+	import C3.Object3DContainer;
+	
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.geom.Vector3D;
-	
-	import C3.AOI3DAXIS;
-	import C3.Object3D;
-	import C3.Camera.Camera;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.ShaderSimple;
 
 	public class PlaneMesh extends Object3D
 	{
@@ -64,9 +68,16 @@ package C3.Mesh
 			calcIndices();
 			calcUV();
 			calcNormal();
-			m_shader = new ShaderSimple(this)
-			m_shader.material = m_material;
-			m_shader.params.culling = Context3DTriangleFace.NONE;
+			
+			
+			var shader : ShaderSimple = new ShaderSimple(this)
+			shader.material = m_material;
+			shader.params.culling = Context3DTriangleFace.NONE;
+			setShader(shader);
+			
+			shaderParams = new ShaderParamters();
+			shaderParams.culling = Context3DTriangleFace.NONE;
+			shaderParams.updateList = [ShaderParamters.CULLING];
 		}
 		
 		private function getNextVertex(firstVector : Vector3D, disU : int, disV : int, outPos : Vector3D = null) : Vector3D
@@ -237,8 +248,7 @@ package C3.Mesh
 		
 		public override function render(context:Context3D, camera:Camera):void
 		{
-			super.render(context,camera);
-			m_shader.render(context);
+			super.render(context, camera);
 		}
 		
 		private var m_axis : String;

@@ -56,6 +56,8 @@ package C3.Material.Shaders
 		
 		public override function render(context3D:Context3D):void
 		{
+			if(!enabled) return;
+			
 //			context3D.clear();
 			context3D.setDepthTest(m_params.writeDepth, m_params.depthFunction);
 			context3D.setCulling(m_params.culling);
@@ -70,6 +72,11 @@ package C3.Material.Shaders
 			context3D.setTextureAt(fcTexture,null);
 			context3D.setVertexBufferAt(vaPos,null);
 			context3D.setVertexBufferAt(vaUV,null);
+		}
+		
+		public override function get type():uint
+		{
+			return SIMPLE;
 		}
 	}
 }

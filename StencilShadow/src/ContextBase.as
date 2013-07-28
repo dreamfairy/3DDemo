@@ -23,7 +23,7 @@ package
 		protected var m_finalMatrix : Matrix3D = new Matrix3D();
 		protected var m_viewMatrix : Matrix3D = new Matrix3D();
 		
-		protected var m_zFar : Number = 1000;
+		protected var m_zFar : Number = 100;
 		protected var m_zNear : Number = 1;
 		protected var m_fov : Number = 45 * (Math.PI/180);
 		
