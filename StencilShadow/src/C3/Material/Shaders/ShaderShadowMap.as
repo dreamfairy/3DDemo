@@ -1,8 +1,5 @@
 package C3.Material.Shaders
 {
-	import C3.Core.Managers.MaterialManager;
-	import C3.Object3D;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -10,14 +7,17 @@ package C3.Material.Shaders
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
-	import flash.display3D.textures.Texture;
 	import flash.display3D.textures.TextureBase;
-	import flash.geom.Matrix3D;
 	import flash.utils.ByteArray;
-	import flash.utils.getTimer;
+	
+	import C3.Object3D;
+	import C3.Core.Managers.MaterialManager;
 	
 	public class ShaderShadowMap extends Shader
 	{
+		private var blurX : int = 2;
+		private var blurY : int = 2;
+		
 		private var renderList : Vector.<Object3D> = new Vector.<Object3D>();
 		private var vaPos : uint = 0;
 		private var vaUV : uint = 1;
@@ -26,12 +26,15 @@ package C3.Material.Shaders
 		private var vcModelWorld : uint = 4;
 		private var vcLightViewProjection : uint = 8;
 		
-		private var fcShadowConstant : uint = 0;
 		private var fsDepthMap : uint = 1;
 		private var fsDiffuseMap : uint = 0;
 		private var depthTexture : TextureBase;
 		
-		private var fcConstant : Vector.<Number> = Vector.<Number>([1000,0.5,1,3]);
+		private var fcShadowConstant : uint = 0;
+		private var fcConstant : Vector.<Number> = Vector.<Number>([1000,0.5,1,2]);
+		
+		private var fcBlurConstant : uint = 1;
+		private var blurConstantData : Vector.<Number> = Vector.<Number>([1/512,1/512,3,0]);
 		
 		public function ShaderShadowMap(renderTarget:Object3D=null)
 		{
@@ -65,28 +68,55 @@ package C3.Material.Shaders
 		{
 			return new AGALMiniAssembler().assemble(Context3DProgramType.FRAGMENT,
 				//纹理采样
-				"tex ft1 v0 fs"+fsDiffuseMap+"<2d,wrap,nearst>\n"+
+				"tex ft0 v0 fs"+fsDiffuseMap+"<2d,wrap,linear>\n"+
 				
 				//将坐标转换到其次坐标
-				"div ft2.xy v1.xy v1.ww\n"+
+				"div ft1.xy v1.xy v1.ww\n"+
 				
 				//将坐标转换到纹理UV fc2.y = 0.5
 				// 0.5 * xy + 0.5;
 				
-				"mul ft2.xy ft2.xy fc"+fcShadowConstant+".y\n"+
-				"add ft2.xy ft2.xy fc"+fcShadowConstant+".y\n"+
+				"mul ft1.xy ft1.xy fc"+fcShadowConstant+".y\n"+
+				"add ft1.xy ft1.xy fc"+fcShadowConstant+".y\n"+
 				
-				"neg ft2.y ft2.y\n"+
+				"neg ft1.y ft1.y\n"+
 				
 				//阴影图深度采样
-				"tex ft3 ft2.xy fs"+fsDepthMap+"<2d,wrap,nearst>\n"+
+				"tex ft2 ft1.xy fs"+fsDepthMap+"<2d,wrap,linear>\n"+
 				
-				"mul ft5.z ft3.z fc"+fcShadowConstant+".x\n"+
-				"add ft5.z ft5.z fc"+fcShadowConstant+".w\n"+
-				"sge ft5.w ft5.z v1.z\n"+
-				"add ft5.w ft5.w fc"+fcShadowConstant+".y\n" +
-				"mul ft1 ft1 ft5.w\n"+
-				"mov oc ft1\n");
+				getBlurAgal() +
+
+				"mul ft3.z ft2.z fc"+fcShadowConstant+".x\n"+
+				"add ft3.z ft3.z fc"+fcShadowConstant+".w\n"+
+				"sge ft3.w ft3.z v1.z\n"+
+				"add ft3.w ft3.w fc"+fcShadowConstant+".y\n" +
+				"mul ft0 ft0 ft3.w\n"+
+				"mov oc ft0\n");
+		}
+		
+		private function getBlurAgal() :　String
+		{
+			var uvList : Array = ["x","y"];
+			var str : String = "";
+			for(var i : int = 0; i < uvList.length; i++)
+			{
+				var coord : String = uvList[i];
+				
+				str +=
+				"mov ft4.xy ft1.xy\n" +
+				"add ft4."+coord+" ft4."+coord+" fc"+fcBlurConstant+".x\n" +
+				"tex ft6 ft4.xy fs"+fsDepthMap+"<2d,wrap,linear>\n"+
+				"mov ft4.xy ft1.xy\n" +
+				"add ft4."+coord+" ft4."+coord+" fc"+fcBlurConstant+".y\n"+
+				"tex ft7 ft4.xy fs"+fsDepthMap+"<2d,wrap,linear>\n"+
+				"add ft7 ft7 ft6\n"+
+				"add ft7 ft7 ft2\n";
+			}
+			str += 
+				"div ft7 ft7 fc"+fcBlurConstant+".z\n"+
+				"mov ft2 ft7\n";
+			
+			return str;
 		}
 		
 		public override function render(context3D:Context3D):void
@@ -95,9 +125,11 @@ package C3.Material.Shaders
 			
 //			context3D.clear();
 			context3D.setProgram(getProgram(context3D));
+			context3D.setTextureAt(fsDepthMap,depthTexture);
 			context3D.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,fcShadowConstant,
 				fcConstant);
-			context3D.setTextureAt(fsDepthMap,depthTexture);
+			context3D.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT,fcBlurConstant,
+				blurConstantData);
 			
 			for each(var target : Object3D in renderList)
 			{

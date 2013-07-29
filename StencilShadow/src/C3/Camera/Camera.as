@@ -1,17 +1,13 @@
 package C3.Camera
 {
-	import C3.AABB;
-	import C3.IDispose;
-	import C3.TeapotMesh;
-	import C3.View;
-	
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
-	import flash.display.Stage;
-	import flash.events.MouseEvent;
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
+	
+	import C3.IDispose;
+	import C3.View;
 
 	public class Camera implements IDispose
 	{
@@ -266,7 +262,7 @@ package C3.Camera
 
 			m_transform.copyRawDataFrom(rawData);
 			
-			m_transform.pointAt(m_target,CAM_FACING,CAM_UP);
+//			m_transform.pointAt(m_target,CAM_FACING,CAM_UP);
 
 			return m_transform;
 		}
@@ -292,9 +288,15 @@ package C3.Camera
 			m_look.setTo(x,y,z);
 		}
 		
+		public function setTargetObjectPoint(target : Vector3D) : void
+		{
+			m_target.setTo(target.x,target.y,target.z);
+		}
+		
 		public function setTarget(x : Number, y : Number, z : Number) : void
 		{
 			m_target.setTo(x,y,z);
+//			m_target.negate();
 		}
 		
 		public function setCameraType(type : uint) : void

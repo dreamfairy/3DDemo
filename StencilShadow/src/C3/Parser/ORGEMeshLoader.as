@@ -1,5 +1,16 @@
 package C3.Parser
 {
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DTriangleFace;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.geom.Vector3D;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.utils.ByteArray;
+	
+	import C3.Object3D;
 	import C3.Animator.AnimalState;
 	import C3.Animator.AnimationSet;
 	import C3.Camera.Camera;
@@ -12,17 +23,7 @@ package C3.Parser
 	import C3.OGRE.OGREAnimParser;
 	import C3.OGRE.OGREMeshParser;
 	import C3.OGRE.OgreMeshData;
-	import C3.Object3D;
 	import C3.Parser.Model.IJoint;
-	
-	import flash.display3D.Context3D;
-	import flash.display3D.Context3DTriangleFace;
-	import flash.events.Event;
-	import flash.events.IOErrorEvent;
-	import flash.net.URLLoader;
-	import flash.net.URLLoaderDataFormat;
-	import flash.net.URLRequest;
-	import flash.utils.ByteArray;
 
 	public class ORGEMeshLoader extends MeshGeoentity
 	{
@@ -78,6 +79,9 @@ package C3.Parser
 		
 		public override function render(context:Context3D, camera:Camera):void
 		{
+			if(m_transformDirty)
+				updateTransform();
+			
 			for each(var child : Object3D in m_modelList)
 			{
 				child.render(context,camera);
@@ -126,11 +130,10 @@ package C3.Parser
 			shader.params.culling = Context3DTriangleFace.FRONT;
 			obj.setShader(shader);
 			
-			obj.pickEnabled = m_pickEnabled;
-			obj.interactive = m_interactive;
-			obj.buttonMode = m_buttonMode;
 			obj.castShadow = castShadow;
 			obj.receiveShadow = receiveShadow;
+			obj.rotateY = -180;
+			obj.buttonMode = m_buttonMode;
 			
 			obj.shaderParams = shaderParams;
 			

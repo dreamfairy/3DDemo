@@ -1,5 +1,15 @@
 package C3
 {
+	import flash.display3D.Context3D;
+	import flash.display3D.IndexBuffer3D;
+	import flash.display3D.Program3D;
+	import flash.display3D.VertexBuffer3D;
+	import flash.events.Event;
+	import flash.geom.Matrix3D;
+	import flash.geom.Orientation3D;
+	import flash.geom.Vector3D;
+	import flash.utils.Dictionary;
+	
 	import C3.Camera.Camera;
 	import C3.Core.Managers.MaterialManager;
 	import C3.Material.IMaterial;
@@ -9,19 +19,6 @@ package C3
 	import C3.Material.Shaders.ShaderShadowMap;
 	import C3.Mesh.MeshBase;
 	import C3.Pool.ContextCache;
-	import C3.PostRender.IPostRender;
-	
-	import com.adobe.utils.AGALMiniAssembler;
-	
-	import flash.display3D.Context3D;
-	import flash.display3D.Context3DProgramType;
-	import flash.display3D.Context3DVertexBufferFormat;
-	import flash.display3D.IndexBuffer3D;
-	import flash.display3D.Program3D;
-	import flash.display3D.VertexBuffer3D;
-	import flash.events.Event;
-	import flash.geom.Matrix3D;
-	import flash.utils.Dictionary;
 	
 	import org.osflash.signals.Signal;
 	
@@ -316,15 +313,53 @@ package C3
 			if(m_transformDirty)
 				updateTransform();
 			
-			m_matrixGlobal.identity();
-			m_matrixGlobal.append(m_transform);
-			var parent : Object3DContainer = m_parent;
-			while(null != parent && !parent.isRoot){
-				m_matrixGlobal.append(parent.transform);
-				parent = parent.parent;
+			if(m_parent){
+				m_matrixGlobal.copyFrom(m_parent.matrixGlobal);
+				m_matrixGlobal.prepend(m_transform);
 			}
 			
+//			var parent : Object3DContainer = m_parent;
+//			while(null != parent && !parent.isRoot){
+//				m_matrixGlobal.append(parent.transform);
+//				parent = parent.parent;
+//			}
+			
 			return m_matrixGlobal;
+		}
+		
+		public function getRight() : Vector3D
+		{
+			return m_right;
+		}
+		
+		public function getUp() : Vector3D
+		{
+			return m_up;
+		}
+		
+		public function getForward(lens : Number = 10) : Vector3D
+		{
+			var gm : Matrix3D = matrixGlobal;
+			var forward : Vector3D = Matrix3DUtils.getForward(gm);
+			forward.scaleBy(lens);
+			forward = gm.position.subtract(forward);
+			
+			return forward;
+		}
+		
+		public function getBack(lens : Number = 10) : Vector3D
+		{
+			var gm : Matrix3D = matrixGlobal;
+			var back : Vector3D = Matrix3DUtils.getForward(gm);
+			back.scaleBy(-lens);
+			back = gm.position.subtract(back);
+			
+			return back;
+		}
+		
+		public function get material() : IMaterial
+		{
+			return m_material;
 		}
 		
 		/**
@@ -537,6 +572,32 @@ package C3
 			m_context = context;
 		}
 		
+		public function lookAt(target : Vector3D, at : Vector3D = null,  up : Vector3D = null) : void
+		{
+			var matrixGlobal : Matrix3D = matrixGlobal;
+			if(matrixGlobal.position.z == target.z){
+				target.z += 0.00001;
+			}
+			if(matrixGlobal.position.x == target.x){
+				target.x += 0.00001;
+			}
+			if(matrixGlobal.position.y == target.y){
+				target.y += 0.00001;
+			}
+			
+			var tempMatrix : Matrix3D = Matrix3DUtils.TEMP_MATRIX;
+			tempMatrix.identity();
+			tempMatrix.position = matrixGlobal.position;
+			tempMatrix.pointAt(target, at|| Quaternion.AT_VECTOR, up || Quaternion.UP_VECTOR);
+			
+			var rot : Vector3D = tempMatrix.decompose(Orientation3D.QUATERNION)[1];
+			var ori : Quaternion = new Quaternion();
+			ori.setTo(rot.w,rot.x,rot.y,rot.z);
+			
+			ori.toEuler(m_rotate);
+			
+			m_transformDirty = true;
+		}
 		
 		private function hasCache(context : Context3D) : ContextCache
 		{
@@ -584,6 +645,10 @@ package C3
 		protected var m_camera : Camera;
 		protected var m_context : Context3D;
 		protected var m_shaderList : Dictionary = new Dictionary();
+		
+		protected var m_right : Vector3D = new Vector3D(1,0,0);
+		protected var m_up : Vector3D = new Vector3D(0,1,0);
+		protected var m_look : Vector3D = new Vector3D(0,0,-1);
 		
 		/**
 		 * 鼠标事件

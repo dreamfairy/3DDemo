@@ -31,7 +31,7 @@ package C3.Material.Shaders
 		
 		public function ShaderDepthMap(context : Context3D)
 		{
-			m_material||=new RTTMaterial(1024, 1024);
+			m_material||=new RTTMaterial(512, 512);
 			m_material.getTexture(context);
 			
 			m_params.blendEnabled		= false;

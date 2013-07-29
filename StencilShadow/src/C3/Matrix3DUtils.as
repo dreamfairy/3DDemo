@@ -1,4 +1,4 @@
-package C3.MD5
+package C3
 {
 	import flash.geom.*;
 	
@@ -7,6 +7,9 @@ package C3.MD5
 	 */
 	public class Matrix3DUtils
 	{
+		public static var RAW_DATA:Vector.<Number> = new Vector.<Number>(16,false);
+		public static var TEMP_MATRIX:Matrix3D     = new Matrix3D();
+		
 		/**
 		 * A reference to a Vector to be used as a temporary raw data container, to prevent object creation.
 		 */

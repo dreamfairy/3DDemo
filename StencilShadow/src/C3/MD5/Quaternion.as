@@ -3,6 +3,7 @@ package C3.MD5
 	import flash.geom.Matrix3D;
 	import flash.geom.Orientation3D;
 	import flash.geom.Vector3D;
+	import C3.Matrix3DUtils;
 
 	/**
 	 * 一个四元数对象可以用来表示旋转

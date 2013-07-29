@@ -3,7 +3,6 @@ package C3.Mesh
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	
-	import C3.Light.SimpleLight;
 	import C3.Material.IMaterial;
 
 	public interface IMesh
@@ -34,7 +33,6 @@ package C3.Mesh
 		function setRotate(x : Number, y : Number, z : Number) : void;
 		
 		function set material(mat : IMaterial) : void;
-		function set light(light : SimpleLight) : void;
 		
 		function get transform() : Matrix3D;
 		

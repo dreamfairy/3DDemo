@@ -40,9 +40,12 @@ package C3
 				m_modelList.push(target);
 				target.parent = this;
 				target.visible = true;
-//				target.pickEnabled = m_pickEnabled;
-//				target.interactive = m_interactive;
-//				target.buttonMode = m_buttonMode;
+				
+				if(m_pickChildren)
+					target.pickEnabled = m_pickChildren;
+				
+				if(m_interactiveChildren)
+					target.interactive = m_interactiveChildren;
 			}
 		}
 		
@@ -111,6 +114,9 @@ package C3
 			m_context = context;
 			m_camera = camera;
 			
+			if(m_transformDirty)
+				updateTransform();
+			
 			var model : Object3D;
 			for each(model in m_modelList)
 			{
@@ -125,6 +131,43 @@ package C3
 			m_transform = null;
 		}
 		
+		public override function updateTransform():void
+		{
+			super.updateTransform();
+			
+			for each(var child : Object3D in m_modelList){
+				child.updateTransform();
+			}
+		}
+		
+		public function set InteractiveChildren(bool : Boolean) : void
+		{
+			m_interactiveChildren = bool;
+			
+			for each(var child : Object3D in m_modelList){
+				child.interactive = bool;
+			}
+		}
+		
+		public function get InteractiveChildren() : Boolean
+		{
+			return m_interactiveChildren;
+		}
+		
+		public function set PickChildren(bool : Boolean) : void
+		{
+			m_pickChildren = bool;
+			
+			for each(var child : Object3D in m_modelList){
+				child.pickEnabled = bool
+			}
+		}
+		
+		public function get PickChildren() : Boolean
+		{
+			return m_pickChildren;
+		}
+		
 		public function get children() : Vector.<Object3D>
 		{
 			return m_modelList;
@@ -132,6 +175,9 @@ package C3
 		
 		private var m_view : View;
 		private var m_isRoot : Boolean;
+		
 		protected var m_modelList : Vector.<Object3D>;
+		protected var m_interactiveChildren : Boolean;
+		protected var m_pickChildren : Boolean;
 	}
 }
