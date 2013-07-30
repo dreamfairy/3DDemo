@@ -1,5 +1,7 @@
 package C3.Material.Shaders
 {
+	import C3.Object3D;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -10,8 +12,6 @@ package C3.Material.Shaders
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
-	
-	import C3.Object3D;
 	
 	/**
 	 * 天空盒Shader
@@ -28,6 +28,8 @@ package C3.Material.Shaders
 		private var vertexConstIndex : uint = 0;
 		/**顶点常量**/
 		private var vertexConst : Vector.<Number> = Vector.<Number>([1,0,0,0]);
+		
+		private var skyBoxMat : Matrix3D = new Matrix3D();
 		
 		public function ShaderSkyBox(renderTarget:Object3D=null)
 		{
@@ -64,7 +66,14 @@ package C3.Material.Shaders
 			context3D.setTextureAt(fcTexture,m_material.getTexture(context3D));
 			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,vertexConstIndex,vertexConst);
 			
-			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,m_renderTarget.camera.projectMatrix,true);
+			skyBoxMat.identity();
+			skyBoxMat.appendTranslation(
+				m_renderTarget.camera.position.x,
+				m_renderTarget.camera.position.y,
+				m_renderTarget.camera.position.z);
+			skyBoxMat.append(m_renderTarget.camera.viewProjMatrix);
+				
+			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,skyBoxMat,true);
 			context3D.setVertexBufferAt(0,m_renderTarget.vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			context3D.drawTriangles(m_renderTarget.indexBuffer,0,m_renderTarget.numTriangles);
 		}

@@ -214,6 +214,11 @@ package C3.Camera
 			updateWorldToClip();
 		}
 		
+		public function get position() : Vector3D
+		{
+			return m_position;
+		}
+		
 		public function get targetX() : Number
 		{
 			return m_target.x;

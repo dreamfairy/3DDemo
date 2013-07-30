@@ -2,6 +2,7 @@ package C3.Camera
 {
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
+	import flash.geom.Vector3D;
 
 	public interface ICamera
 	{
@@ -21,5 +22,6 @@ package C3.Camera
 		function get lightProjection() : Matrix3D;
 		function setPositionValues(x : Number, y : Number, z : Number) : void;
 		function setTargetValues(x : Number, y : Number, z : Number) : void;
+		function get position() : Vector3D;
 	}
 }

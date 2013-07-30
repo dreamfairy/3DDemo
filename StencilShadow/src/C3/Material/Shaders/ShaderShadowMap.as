@@ -31,7 +31,7 @@ package C3.Material.Shaders
 		private var depthTexture : TextureBase;
 		
 		private var fcShadowConstant : uint = 0;
-		private var fcConstant : Vector.<Number> = Vector.<Number>([1000,0.5,1,2]);
+		private var fcConstant : Vector.<Number> = Vector.<Number>([1000,0.5,1,2.5]);
 		
 		private var fcBlurConstant : uint = 1;
 		private var blurConstantData : Vector.<Number> = Vector.<Number>([1/512,1/512,3,0]);
