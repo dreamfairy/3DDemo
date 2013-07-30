@@ -7,6 +7,7 @@ package C3.Core.Managers
 	import C3.Object3D;
 	import C3.View;
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Event.MouseEvent3D;
 
 	public class PickManager implements IDispose
@@ -74,7 +75,7 @@ package C3.Core.Managers
 			return m_pickRender;
 		}
 		
-		public function render(camera : Camera) : void
+		public function render(camera : ICamera) : void
 		{
 			m_pickRender.mouseCoordX = m_view.mouseX;
 			m_pickRender.mouseCoordY = m_view.mouseY;

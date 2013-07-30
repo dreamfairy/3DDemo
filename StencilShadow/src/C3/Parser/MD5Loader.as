@@ -15,17 +15,17 @@ package C3.Parser
 	import C3.Object3DContainer;
 	import C3.Animator.Animator;
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.AnimGeoentity;
 	import C3.Geoentity.MeshGeoentity;
 	import C3.MD5.MD5Joint;
+	import C3.MD5.MD5MeshData;
 	import C3.MD5.MD5MeshParser;
 	import C3.MD5.MD5Vertex;
 	import C3.MD5.MD5Weight;
-	import C3.MD5.MD5MeshData;
 	import C3.Material.IMaterial;
 	import C3.Parser.Model.IJoint;
-	import C3.Parser.Model.MeshDataBase;
 
 	public class MD5Loader extends MeshGeoentity
 	{
@@ -128,7 +128,7 @@ package C3.Parser
 			
 			Camera.TEMP_FINAL_MATRIX.identity();
 			Camera.TEMP_FINAL_MATRIX.append(m_transform);
-			Camera.TEMP_FINAL_MATRIX.append(m_camera.getViewMatrix());
+			Camera.TEMP_FINAL_MATRIX.append(m_camera.viewProjMatrix);
 			
 			var parent : Object3DContainer = m_parent;
 			while(null != parent){
@@ -145,7 +145,7 @@ package C3.Parser
 			m_context.setTextureAt(0,m_material.getTexture(m_context));
 		}
 		
-		public override function render(context:Context3D, camera:Camera):void
+		public override function render(context:Context3D, camera:ICamera):void
 		{
 			m_context = context;
 			m_camera = camera;

@@ -6,6 +6,8 @@ package C3.Mesh
 	import flash.geom.Vector3D;
 	
 	import C3.IDispose;
+	import C3.Object3DContainer;
+	import C3.Quaternion;
 	import C3.Light.SimpleLight;
 	import C3.Material.ColorMaterial;
 	import C3.Material.IMaterial;
@@ -87,7 +89,7 @@ package C3.Mesh
 		
 		public function set rotateX(value:Number):void
 		{
-			m_rotate.x = value;
+			m_rotate.x = value % 360;
 			
 			m_transformDirty = true;
 		}
@@ -99,7 +101,7 @@ package C3.Mesh
 		
 		public function set rotateY(value:Number):void
 		{
-			m_rotate.y = value;
+			m_rotate.y = value % 360;
 			
 			m_transformDirty = true;
 		}
@@ -111,7 +113,7 @@ package C3.Mesh
 		
 		public function set rotateZ(value:Number):void
 		{
-			m_rotate.z = value;
+			m_rotate.z = value % 360;
 			
 			m_transformDirty = true;
 		}
@@ -171,10 +173,18 @@ package C3.Mesh
 		
 		public function updateTransform():void
 		{
+//			if(this is Object3DContainer)trace(m_rotate);
+			
+			m_decomposedMatrix[0].x = m_pos.x;
+			m_decomposedMatrix[0].y = m_pos.y;
+			m_decomposedMatrix[0].z = m_pos.z;
+			
 			m_tempRotation.copyFrom(m_rotate);
-			m_tempRotation.scaleBy(Math.PI/180);
+			m_tempRotation.scaleBy(Quaternion.DEG_TO_RAD);
 			
 			m_decomposedMatrix[1] = m_tempRotation;
+			
+			m_decomposedMatrix[2] = m_scale;
 			
 			m_transform.recompose(m_decomposedMatrix,Orientation3D.EULER_ANGLES);
 			

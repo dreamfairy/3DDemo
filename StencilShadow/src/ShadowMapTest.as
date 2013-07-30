@@ -10,10 +10,8 @@ package
 	import flash.geom.Vector3D;
 	import flash.text.TextField;
 	import flash.ui.Keyboard;
-	import flash.utils.flash_proxy;
 	
 	import C3.AOI3DAXIS;
-	import C3.Matrix3DUtils;
 	import C3.Object3D;
 	import C3.Object3DContainer;
 	import C3.View;
@@ -44,10 +42,10 @@ package
 				removeEventListener(Event.ADDED_TO_STAGE, init);
 			
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
-			m_view.camera.setCameraType(Camera.LANDOBJECT);
-			m_view.camera.Position.z = -160;
+//			m_view.camera.setCameraType(Camera.LANDOBJECT);
+//			m_view.camera.Position.z = -160;
 			addChild(m_view);
-//			addChild(new Stats());
+			addChild(new Stats());
 			
 			var mat : Matrix3D = new Matrix3D();
 			mat.pointAt(new Vector3D(11,12,13), Camera.CAM_FACING, Camera.CAM_UP);
@@ -71,7 +69,7 @@ package
 			m_info.height = m_info.textHeight + 10;
 			
 			m_container = new Object3DContainer("root");
-			m_container.z = -200;
+			m_container.z = -30;
 			
 			var bottomPlane : PlaneMesh = new PlaneMesh("floor",10,10, 2, AOI3DAXIS.XZ, new TextureMaterial(floorData));
 			bottomPlane.y = -5;
@@ -104,14 +102,14 @@ package
 			m_sphere = new SphereMesh("earth",15,15, new TextureMaterial(earthData));
 			m_sphere.setScale(5,5,5);
 			m_sphere.y = -2;
-			m_sphere.z = 10;
+			m_sphere.z = -15;
 			m_sphere.pickEnabled = true;
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
 			m_sphere.castShadow = true;
 			m_sphere.receiveShadow = true;
 			m_sphere.onMouseClick.add(onMouseClick);
-			m_container.addChild(m_sphere);
+			m_view.scene.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
@@ -122,13 +120,14 @@ package
 			m_ogreModel.receiveShadow = true;
 			m_ogreModel.y = -5;
 			m_ogreModel.z = 20;
+			m_ogreModel.rotateY = -180;
 			m_container.addChild(m_ogreModel);
 			
 //			loadAnim();
 			
 			m_view.scene.addChild(m_container);
-			m_view.camera.setGlobalLightTarget(0,0,-200);
-			m_view.camera.setGlobalLightPos(100,25,-180);
+			m_view.camera.setGlobalLightTarget(0,0,-30);
+			m_view.camera.setGlobalLightPos(100,25,-18);
 			
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
@@ -182,14 +181,13 @@ package
 
 //			m_ogreModel.lookAt(m_sphere.matrixGlobal.position);
 			
-			m_view.camera.Position = m_ogreModel.getBack(4);
-			m_view.camera.Position.y = -2;
-//			m_view.camera.setTargetObjectPoint(m_ogreModel.getForward());
-//			trace(m_ogreModel.getForward());
 			
-//			var forward : Vector3D = m_ogreModel.getForward();
-//			trace("pos",m_ogreModel.matrixGlobal.position);
-//			trace("forwoad",forward);
+			
+			var cat : Object3D = m_ogreModel;
+			var pos : Vector3D = cat.matrixGlobal.position;
+			var forward : Vector3D = cat.getForward();
+			m_view.camera.setPositionValues(pos.x,pos.y + 1.5, pos.z);
+			m_view.camera.setTargetValues(forward.x,forward.y + 1.5, forward.z);
 		}
 		
 		private function renderKeyboard() : void
@@ -207,34 +205,34 @@ package
 				m_model.animator.pause();
 			
 			if(m_key[Keyboard.LEFT])
-				m_ogreModel.x -= .5;
+				m_ogreModel.rotateY += 5;
 			
 			if(m_key[Keyboard.RIGHT])
-				m_ogreModel.x += .5;
+				m_ogreModel.rotateY -= 5;
 			
 			if(m_key[Keyboard.UP])
-				m_ogreModel.z -= .5;
+				m_ogreModel.moveForward();
 			
 			if(m_key[Keyboard.DOWN])
-				m_ogreModel.z += .5;
+				m_ogreModel.moveBack();
 			
 			if(m_key[Keyboard.W])
-				m_view.getCamera().walk(-.5);
+				m_view.camera.moveForward(1);
 			
 			if(m_key[Keyboard.S])
-				m_view.getCamera().walk(.5);
+				m_view.camera.moveBackward(1);
 			
 			if(m_key[Keyboard.D])
-				m_view.getCamera().yaw(-.5)
+				m_view.camera.yaw(-1)
 			
 			if(m_key[Keyboard.A])
-				m_view.getCamera().yaw(.5)
+				m_view.camera.yaw(1)
 					
 			if(m_key[Keyboard.R])
-				m_view.getCamera().fly(-.5)
+				m_view.camera.moveUp(1)
 			
 			if(m_key[Keyboard.T])
-				m_view.getCamera().fly(.5)
+				m_view.camera.moveDown(1)
 			
 //			m_view.camera.setTarget(0,m_ogreModel.x,m_ogreModel.z - 5);
 		}

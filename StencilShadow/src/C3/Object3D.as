@@ -11,6 +11,7 @@ package C3
 	import flash.utils.Dictionary;
 	
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Core.Managers.MaterialManager;
 	import C3.Material.IMaterial;
 	import C3.Material.Shaders.Shader;
@@ -337,7 +338,7 @@ package C3
 			return m_up;
 		}
 		
-		public function getForward(lens : Number = 10) : Vector3D
+		public function getBack(lens : Number = 10) : Vector3D
 		{
 			var gm : Matrix3D = matrixGlobal;
 			var forward : Vector3D = Matrix3DUtils.getForward(gm);
@@ -347,7 +348,7 @@ package C3
 			return forward;
 		}
 		
-		public function getBack(lens : Number = 10) : Vector3D
+		public function getForward(lens : Number = 10) : Vector3D
 		{
 			var gm : Matrix3D = matrixGlobal;
 			var back : Vector3D = Matrix3DUtils.getForward(gm);
@@ -355,6 +356,36 @@ package C3
 			back = gm.position.subtract(back);
 			
 			return back;
+		}
+		
+		public function moveForward(lens : Number = 1) : void
+		{
+			var forward : Vector3D = getForward();
+			var vec : Vector3D = matrixGlobal.position.clone();
+			vec.x = forward.x - vec.x;
+			vec.y = forward.y - vec.y;
+			vec.z = forward.z - vec.z;
+			vec.normalize();
+			vec.scaleBy(lens);
+			
+			var newPos : Vector3D = m_pos.add(vec);
+			this.x = newPos.x;
+			this.z = newPos.z;
+		}
+		
+		public function moveBack(lens : Number = 1) : void
+		{
+			var back : Vector3D = getForward();
+			var vec : Vector3D = matrixGlobal.position.clone();
+			vec.x = back.x - vec.x;
+			vec.y = back.y - vec.y;
+			vec.z = back.z - vec.z;
+			vec.normalize();
+			vec.scaleBy(-lens);
+			
+			var newPos : Vector3D = m_pos.add(vec);
+			this.x = newPos.x;
+			this.z = newPos.z;
 		}
 		
 		public function get material() : IMaterial
@@ -371,7 +402,7 @@ package C3
 		 * 
 		 * fc0 材质提供的数据
 		 */
-		public function render(context : Context3D, camera : Camera) : void
+		public function render(context : Context3D, camera : ICamera) : void
 		{
 			m_context = context;
 			m_camera = camera;
@@ -434,12 +465,12 @@ package C3
 			}
 		}
 		
-		public function get camera() : Camera
+		public function get camera() : ICamera
 		{
 			return m_camera;
 		}
 		
-		public function set camera(camera : Camera) : void
+		public function set camera(camera : ICamera) : void
 		{
 			m_camera = camera;
 		}
@@ -642,13 +673,17 @@ package C3
 		protected var m_jointIndexRawData : Vector.<Number>;
 		protected var m_jointWeightRawData : Vector.<Number>;
 		
-		protected var m_camera : Camera;
+		protected var m_camera : ICamera;
 		protected var m_context : Context3D;
 		protected var m_shaderList : Dictionary = new Dictionary();
 		
 		protected var m_right : Vector3D = new Vector3D(1,0,0);
 		protected var m_up : Vector3D = new Vector3D(0,1,0);
 		protected var m_look : Vector3D = new Vector3D(0,0,-1);
+		
+		//朝向
+		protected var m_viewDir : Vector3D;
+		protected var m_target : Vector3D;
 		
 		/**
 		 * 鼠标事件

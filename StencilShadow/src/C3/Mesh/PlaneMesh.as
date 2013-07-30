@@ -1,18 +1,19 @@
 package C3.Mesh
 {
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DTriangleFace;
+	import flash.geom.Vector3D;
+	
 	import C3.AOI3DAXIS;
+	import C3.Object3D;
+	import C3.Object3DContainer;
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Core.Managers.MaterialManager;
 	import C3.Material.IMaterial;
 	import C3.Material.Shaders.Shader;
 	import C3.Material.Shaders.ShaderParamters;
 	import C3.Material.Shaders.ShaderSimple;
-	import C3.Object3D;
-	import C3.Object3DContainer;
-	
-	import flash.display3D.Context3D;
-	import flash.display3D.Context3DTriangleFace;
-	import flash.geom.Vector3D;
 
 	public class PlaneMesh extends Object3D
 	{
@@ -246,7 +247,7 @@ package C3.Mesh
 			uvRawData = Vector.<Number>([0,0,1,0,0,1,1,1]);
 		}
 		
-		public override function render(context:Context3D, camera:Camera):void
+		public override function render(context:Context3D, camera:ICamera):void
 		{
 			super.render(context, camera);
 		}

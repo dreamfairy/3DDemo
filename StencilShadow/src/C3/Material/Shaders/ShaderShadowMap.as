@@ -84,7 +84,7 @@ package C3.Material.Shaders
 				//阴影图深度采样
 				"tex ft2 ft1.xy fs"+fsDepthMap+"<2d,wrap,linear>\n"+
 				
-				getBlurAgal() +
+//				getBlurAgal() +
 
 				"mul ft3.z ft2.z fc"+fcShadowConstant+".x\n"+
 				"add ft3.z ft3.z fc"+fcShadowConstant+".w\n"+

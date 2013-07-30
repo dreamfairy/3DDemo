@@ -1,12 +1,12 @@
 package C3.OGRE
 {
-	import C3.Parser.Model.IJoint;
-	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	
+	import C3.Parser.Model.IJoint;
 
 	public class OGREAnimParser extends EventDispatcher
 	{
@@ -56,7 +56,6 @@ package C3.OGRE
 			
 			m_jointList = new Vector.<IJoint>();
 			getChildren(m_jointList, jointTree);
-			trace(m_jointList.length);
 			
 			this.dispatchEvent(new Event(Event.COMPLETE));
 		}

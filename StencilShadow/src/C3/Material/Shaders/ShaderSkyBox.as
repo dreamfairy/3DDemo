@@ -7,6 +7,8 @@ package C3.Material.Shaders
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.geom.Matrix3D;
+	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 	
 	import C3.Object3D;
@@ -61,6 +63,7 @@ package C3.Material.Shaders
 			context3D.setProgram(getProgram(context3D));
 			context3D.setTextureAt(fcTexture,m_material.getTexture(context3D));
 			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX,vertexConstIndex,vertexConst);
+			
 			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,m_renderTarget.camera.projectMatrix,true);
 			context3D.setVertexBufferAt(0,m_renderTarget.vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			context3D.drawTriangles(m_renderTarget.indexBuffer,0,m_renderTarget.numTriangles);

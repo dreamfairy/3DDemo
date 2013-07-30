@@ -17,9 +17,8 @@ package C3.Core.Managers
 	import flash.ui.MouseCursor;
 	
 	import C3.Object3D;
-	import C3.Object3DContainer;
 	import C3.View;
-	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Material.Shaders.ShaderHitObject;
 	import C3.Mesh.IMesh;
 
@@ -90,7 +89,7 @@ package C3.Core.Managers
 			m_shader = new ShaderHitObject();
 		}
 		
-		public function render(view : View, camera : Camera) : void
+		public function render(view : View, camera : ICamera) : void
 		{
 			m_lastHit = null;
 			
@@ -154,8 +153,7 @@ package C3.Core.Managers
 				
 				m_finalMatrix.identity();
 				m_finalMatrix.append(renderObject.matrixGlobal);
-				m_finalMatrix.append(camera.getViewMatrix());
-				m_finalMatrix.append(camera.projectMatrix);
+				m_finalMatrix.append(camera.viewProjMatrix);
 				
 				m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, m_finalMatrix, true);
 				

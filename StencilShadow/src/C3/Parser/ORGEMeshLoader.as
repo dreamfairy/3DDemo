@@ -14,6 +14,7 @@ package C3.Parser
 	import C3.Animator.AnimalState;
 	import C3.Animator.AnimationSet;
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.MeshGeoentity;
 	import C3.Material.IMaterial;
@@ -77,7 +78,7 @@ package C3.Parser
 			loadData(m_sourceFolder + e.data + ".xml");
 		}
 		
-		public override function render(context:Context3D, camera:Camera):void
+		public override function render(context:Context3D, camera:ICamera):void
 		{
 			if(m_transformDirty)
 				updateTransform();
@@ -118,7 +119,7 @@ package C3.Parser
 		
 		private function onMeshLoaded(e:AOI3DLOADEREVENT) : void
 		{
-			var obj : Object3D = new Object3D(m_name, m_material);
+			var obj : Object3D = new Object3D("cat", m_material);
 			var meshData : OgreMeshData = e.data;
 			obj.uvRawData = meshData.getUv();
 			obj.indexRawData = meshData.getIndex();
@@ -132,7 +133,7 @@ package C3.Parser
 			
 			obj.castShadow = castShadow;
 			obj.receiveShadow = receiveShadow;
-			obj.rotateY = -180;
+//			obj.rotateY = -180;
 			obj.buttonMode = m_buttonMode;
 			
 			obj.shaderParams = shaderParams;

@@ -4,6 +4,7 @@ package C3
 	import flash.geom.Matrix3D;
 	
 	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
 	import C3.Material.IMaterial;
 	import C3.PostRender.IPostRender;
 	
@@ -109,7 +110,7 @@ package C3
 			matrix.append(transform);
 		}
 		
-		public override function render(context : Context3D, camera : Camera) : void
+		public override function render(context : Context3D, camera : ICamera) : void
 		{
 			m_context = context;
 			m_camera = camera;

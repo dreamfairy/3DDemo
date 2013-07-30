@@ -1,11 +1,5 @@
 package C3.Mesh.SkyBox
 {
-	import C3.Camera.Camera;
-	import C3.Material.IMaterial;
-	import C3.Material.Shaders.Shader;
-	import C3.Material.Shaders.ShaderSkyBox;
-	import C3.Object3D;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -13,6 +7,13 @@ package C3.Mesh.SkyBox
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
+	
+	import C3.Object3D;
+	import C3.Camera.Camera;
+	import C3.Camera.ICamera;
+	import C3.Material.IMaterial;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderSkyBox;
 	
 	public class SkyBoxBase extends Object3D
 	{
@@ -68,7 +69,7 @@ package C3.Mesh.SkyBox
 			setShader(shader);
 		}
 		
-		public override function render(context:Context3D, camera:Camera):void
+		public override function render(context:Context3D, camera:ICamera):void
 		{
 			m_context = context;
 			m_camera = camera;

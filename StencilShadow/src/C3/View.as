@@ -1,17 +1,8 @@
 package C3
 {
-	import C3.Camera.Camera;
-	import C3.Core.Managers.MaterialManager;
-	import C3.Core.Managers.PickManager;
-	import C3.Material.Shaders.Shader;
-	import C3.Material.Shaders.ShaderDepthMap;
-	import C3.Mesh.SkyBox.SkyBoxBase;
-	import C3.PostRender.IPostRender;
-	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display.BitmapData;
-	import flash.display.ShaderData;
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
@@ -22,6 +13,15 @@ package C3
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
+	
+	import C3.Camera.Camera3D;
+	import C3.Camera.ICamera;
+	import C3.Core.Managers.MaterialManager;
+	import C3.Core.Managers.PickManager;
+	import C3.Material.Shaders.Shader;
+	import C3.Material.Shaders.ShaderDepthMap;
+	import C3.Mesh.SkyBox.SkyBoxBase;
+	import C3.PostRender.IPostRender;
 
 	public class View extends Sprite implements IDispose
 	{
@@ -31,8 +31,16 @@ package C3
 			m_height = height;
 			m_enableErrorCheck = enableErrorCheck;
 			
-			m_camera = new Camera();
-			m_worldMatrix = new Matrix3D();
+			m_camera = new Camera3D(
+				0.001, //near
+				1000.0, //far
+				600/600, //aspect
+				45, //fov
+				0,0,0, //pos
+				0,0,-1, //target
+				0,1,0 //upDir
+			);
+			
 			m_postRenderList = new Vector.<IPostRender>();
 			m_modelList = new Vector.<Object3D>();
 			
@@ -45,9 +53,14 @@ package C3
 			addEventListener(Event.ADDED_TO_STAGE, addedToStage);
 		}
 		
-		public function get camera() : Camera
+		public function get camera() : ICamera
 		{
 			return m_camera;
+		}
+		
+		public function set camera(camera : ICamera) : void
+		{
+			m_camera = camera;
 		}
 		
 		private function addedToStage(e:Event) : void
@@ -61,7 +74,7 @@ package C3
 			
 			m_viewport = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
 			m_camera.viewport = m_viewport;
-			m_camera.parent = this;
+//			m_camera.parent = this;
 		}
 		
 		private function onCreateContext(e:Event) : void
@@ -91,11 +104,6 @@ package C3
 			m_pickManager.render(m_camera);
 			
 			onAfterRender();
-		}
-		
-		public function getCamera() : Camera
-		{
-			return m_camera;
 		}
 		
 		private function onBeforeRender() : void
@@ -312,7 +320,7 @@ package C3
 		
 		private var m_pickManager : PickManager;
 		
-		private var m_camera : Camera;
+		private var m_camera : ICamera;
 		private var m_context : Context3D;
 		private var m_viewport : Rectangle;
 		private var m_width : int;
@@ -323,7 +331,6 @@ package C3
 		private var m_postRenderList : Vector.<IPostRender>;
 		private var m_modelList : Vector.<Object3D>;
 		
-		private var m_worldMatrix : Matrix3D;
 		private var m_skyBox : SkyBoxBase;
 		
 		public static var contextList : Vector.<Context3D> = new Vector.<Context3D>(3,true);
