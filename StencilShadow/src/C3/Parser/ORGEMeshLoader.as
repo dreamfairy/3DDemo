@@ -85,17 +85,17 @@ package C3.Parser
 			
 			for each(var child : Object3D in m_modelList)
 			{
-				child.render(context,camera);
+//				child.render(context,camera);
 				
-//				if(m_animatorSet){
-//					if(m_animatorSet.shader.renderTarget != child){
-//						child.shader.render(context);
-//					}else{
-//						m_animatorSet.render(context);
-//					}
-//				}else{
-//					child.shader.render(context);
-//				}
+				if(m_animatorSet){
+					if(m_animatorSet.shader.renderTarget != child){
+						child.render(context, camera);
+					}else{
+						m_animatorSet.render(context);
+					}
+				}else{
+					child.render(context, camera);
+				}
 			}
 		}
 		

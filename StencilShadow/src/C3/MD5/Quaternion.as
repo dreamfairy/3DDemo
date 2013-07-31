@@ -1,8 +1,11 @@
 package C3.MD5
 {
+	import com.yogurt3d.core.transformations.Quaternion;
+	
 	import flash.geom.Matrix3D;
 	import flash.geom.Orientation3D;
 	import flash.geom.Vector3D;
+	
 	import C3.Matrix3DUtils;
 
 	/**
@@ -70,6 +73,33 @@ package C3.MD5
 			z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
 		}
 		
+		public function multiply2( _quaternion:Quaternion, copyTo:Quaternion = null):Quaternion
+		{
+			// NOTE:  Multiplication is not generally commutative, so in most
+			// cases p*q != q*p.
+			
+			var _X:Number = _quaternion.x;
+			var _Y:Number = _quaternion.y;
+			var _Z:Number = _quaternion.z;
+			var _W:Number = _quaternion.w;
+			
+			if( copyTo != null )
+			{
+				copyTo.w = w * _W - x * _X - y * _Y - z * _Z;
+				copyTo.x = w * _X + x * _W + y * _Z - z * _Y;
+				copyTo.y = w * _Y + y * _W + z * _X - x * _Z;
+				copyTo.z = w * _Z + z * _W + x * _Y - y * _X;
+				return copyTo;
+			}
+			return new Quaternion
+			(
+				w * _W - x * _X - y * _Y - z * _Z,
+				w * _X + x * _W + y * _Z - z * _Y,
+				w * _Y + y * _W + z * _X - x * _Z,
+				w * _Z + z * _W + x * _Y - y * _X
+			);
+		}
+		
 		public function multiplyVector(vector : Vector3D, target : Quaternion = null) : Quaternion
 		{
 			target ||= new Quaternion();
@@ -84,6 +114,18 @@ package C3.MD5
 			target.z = w * z2 + x * y2 - y * x2;
 			
 			return target;
+		}
+		
+		public function multiplyVector2(vector : Vector3D) : Vector3D
+		{
+			var uv : Vector3D, uuv : Vector3D;
+			var qvec : Vector3D = new Vector3D(x,y,z);
+			uv = qvec.crossProduct(vector);
+			uuv = qvec.crossProduct(uv);
+			uv.scaleBy(2.0 * w);
+			uuv.scaleBy(2.0);
+			
+			return vector.add(uv).add(uuv);
 		}
 		
 		/**
@@ -275,6 +317,14 @@ package C3.MD5
 			return target;
 		}
 		
+		public function toVector3D(_vec : Vector3D = null) : Vector3D
+		{
+			var vec : Vector3D = _vec || new Vector3D();
+			vec.setTo(x,y,z);
+			vec.w = w;
+			return vec;
+		}
+		
 		/**
 		 * Extracts a quaternion rotation matrix out of a given Matrix3D object.
 		 * @param matrix The Matrix3D out of which the rotation will be extracted.
@@ -361,6 +411,18 @@ package C3.MD5
 			y = q.y;
 			z = q.z;
 			w = q.w;
+		}
+		
+		public function inverse() : Quaternion
+		{
+			var fNorm : Number = w * w + x * x + y * y + z * z;
+			if(fNorm > 0.0)
+			{
+				var fInvNorm : Number = 1.0 / fNorm;
+				return new Quaternion(-x * fInvNorm, -y * fInvNorm, -z * fInvNorm, w * fInvNorm);
+			}else{
+				return null;
+			}
 		}
 	}
 }

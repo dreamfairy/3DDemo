@@ -113,6 +113,8 @@ package
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
+			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
+			m_ogreModel.animatorset.onStateLoaded.add(onStateLoaded);
 			m_ogreModel.onMouseClick.add(onMouseClick);
 			m_ogreModel.InteractiveChildren = m_ogreModel.PickChildren = true;
 			m_ogreModel.buttonMode = true;
@@ -135,6 +137,11 @@ package
 			this.addEventListener(Event.ENTER_FRAME, onEnter);
 		}
 		
+		private function onStateLoaded(stateName : String) : void
+		{
+			m_ogreModel.animatorset.getState(stateName).play();
+		}
+				
 		private function onKeyDown(e:KeyboardEvent) : void
 		{
 			m_key[e.keyCode] = true;
@@ -186,8 +193,8 @@ package
 			var cat : Object3D = m_ogreModel;
 			var pos : Vector3D = cat.matrixGlobal.position;
 			var forward : Vector3D = cat.getForward();
-			m_view.camera.setPositionValues(pos.x,pos.y + 1.5, pos.z);
-			m_view.camera.setTargetValues(forward.x,forward.y + 1.5, forward.z);
+//			m_view.camera.setPositionValues(pos.x,pos.y + 1.5, pos.z);
+//			m_view.camera.setTargetValues(forward.x,forward.y + 1.5, forward.z);
 		}
 		
 		private function renderKeyboard() : void

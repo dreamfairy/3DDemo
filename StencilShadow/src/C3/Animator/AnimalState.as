@@ -122,7 +122,7 @@ package C3.Animator
 		{
 			var t : Number = tick / 100000;
 
-			var animationBone : Vector.<IJoint> = m_data.joints;
+			var animationBone : Vector.<IJoint> = parent.target.joints;
 //			for each(var test : OGREJoint in animationBone){
 //				trace(test.name);
 //			}

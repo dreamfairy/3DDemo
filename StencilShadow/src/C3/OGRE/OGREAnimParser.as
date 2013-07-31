@@ -6,6 +6,7 @@ package C3.OGRE
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	
+	import C3.MD5.Quaternion;
 	import C3.Parser.Model.IJoint;
 
 	public class OGREAnimParser extends EventDispatcher
@@ -57,7 +58,19 @@ package C3.OGRE
 			m_jointList = new Vector.<IJoint>();
 			getChildren(m_jointList, jointTree);
 			
+			
+			setBindPose();
+			
 			this.dispatchEvent(new Event(Event.COMPLETE));
+		}
+		
+		private function setBindPose() : void
+		{
+			var len : uint = m_jointList.length;
+			for(var i : int = 0; i < len; i++)
+			{
+				m_jointList[i].setBindPose();
+			}
 		}
 		
 		private function getChildren(list : Vector.<IJoint>, tree : JointTree) : void
@@ -95,6 +108,8 @@ package C3.OGRE
 						case ROTATION:
 							bone.angle = info.@angle;
 							bone.axis = new Vector3D(info[AXIS].@x,info[AXIS].@y,info[AXIS].@z);
+							bone.quaternion = new Quaternion();
+							bone.quaternion.fromAxisAngle(bone.axis,bone.angle);
 							break;
 					}
 				}
