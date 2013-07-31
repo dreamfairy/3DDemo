@@ -37,7 +37,7 @@ package C3
 				600/600, //aspect
 				45, //fov
 				0,0,0, //pos
-				0,0,-1, //target
+				0,0,-100, //target
 				0,1,0 //upDir
 			);
 			

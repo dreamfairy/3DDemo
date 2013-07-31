@@ -1,5 +1,7 @@
 package C3.Material.Shaders
 {
+	import C3.Object3D;
+	
 	import com.adobe.utils.AGALMiniAssembler;
 	
 	import flash.display3D.Context3D;
@@ -8,9 +10,8 @@ package C3.Material.Shaders
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.VertexBuffer3D;
+	import flash.geom.Matrix3D;
 	import flash.utils.ByteArray;
-	
-	import C3.Object3D;
 	
 	public class ShaderOgreSkeleton extends Shader
 	{
@@ -63,7 +64,10 @@ package C3.Material.Shaders
 			
 			context3D.setProgram(getProgram(context3D));
 			context3D.setTextureAt(fcTexture,m_material.getTexture(context3D));
-			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,m_renderTarget.modelViewProjMatrix,true);
+			
+			var mat : Matrix3D = m_renderTarget.matrixGlobal.clone();
+			mat.append(m_renderTarget.camera.viewProjMatrix);
+			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,mat,true);
 			context3D.setVertexBufferAt(vaPos,m_vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			context3D.setVertexBufferAt(vaUV,m_renderTarget.uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
 			context3D.drawTriangles(m_renderTarget.indexBuffer,0,m_renderTarget.numTriangles);

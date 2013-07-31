@@ -393,6 +393,13 @@ package C3
 			return m_material;
 		}
 		
+		public override function updateTransform():void
+		{
+			if(m_name == "cat")
+				trace("here");
+			super.updateTransform();
+		}
+		
 		/**
 		 * 模型矩阵放置在 124 末位
 		 * 顶点	vt0

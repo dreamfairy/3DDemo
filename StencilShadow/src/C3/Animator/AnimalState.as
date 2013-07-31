@@ -99,7 +99,6 @@ package C3.Animator
 						var curIndex : Number = boneData.index;
 						var curWeight : Number = boneData.weight;
 						var curMatrix : Matrix3D = m_cpuAnimMatrix[curIndex];
-//						curMatrix.transpose();
 						temp = curMatrix.transformVector(curVert.pos);
 						temp.scaleBy(curWeight);
 						result = result.add(temp);
@@ -135,27 +134,26 @@ package C3.Animator
 			for each(currentJoint in animationBone)
 			{
 				var matrix3D : Matrix3D = new Matrix3D();
-				
-				if(currentJoint.hasFrameData){
-					if(t > currentJoint.getNextFrameTime(t)){
-						currentFrameData = currentJoint.nextFrameData;
-					}else{
-						currentFrameData = currentJoint.currentFrameData;
-					}
-					
-					matrix3D.appendRotation(currentFrameData.rotate,currentFrameData.axis,currentFrameData.translate);
-				}else{
-					matrix3D.appendRotation(currentJoint.angle,currentJoint.axis,currentJoint.position);
-				}
-				
-				if(currentJoint.parent){
-					matrix3D.append(currentJoint.parent.bindPose);	
-				}else{
-					currentJoint.bindPose = matrix3D;
-				}
-				
-				matrix3D = currentJoint.inverseBindPose.clone();
-				matrix3D.append(currentJoint.bindPose);
+//				
+//				if(currentJoint.hasFrameData){
+//					if(t > currentJoint.getNextFrameTime(t)){
+//						currentFrameData = currentJoint.nextFrameData;
+//					}else{
+//						currentFrameData = currentJoint.currentFrameData;
+//					}
+//					
+//					matrix3D.appendRotation(currentFrameData.rotate,currentFrameData.axis,currentFrameData.translate);
+//				}else{
+//					matrix3D.appendRotation(currentJoint.angle,currentJoint.axis,currentJoint.position);
+//				}
+//				
+//				if(currentJoint.parent){
+//					matrix3D.append(currentJoint.parent.bindPose);	
+//				}else{
+//					currentJoint.bindPose = matrix3D;
+//				}
+//				
+				matrix3D = currentJoint.transformationMatrix.clone();
 				
 				m_cpuAnimMatrix[currentJoint.id] = matrix3D;
 			}

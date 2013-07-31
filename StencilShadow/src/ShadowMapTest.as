@@ -43,7 +43,7 @@ package
 			
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
 //			m_view.camera.setCameraType(Camera.LANDOBJECT);
-//			m_view.camera.Position.z = -160;
+			m_view.camera.setPositionValues(0,-2,0);
 			addChild(m_view);
 			addChild(new Stats());
 			
@@ -190,9 +190,9 @@ package
 			
 			
 			
-			var cat : Object3D = m_ogreModel;
-			var pos : Vector3D = cat.matrixGlobal.position;
-			var forward : Vector3D = cat.getForward();
+//			var cat : Object3D = m_ogreModel;
+//			var pos : Vector3D = cat.matrixGlobal.position;
+//			var forward : Vector3D = cat.getForward();
 //			m_view.camera.setPositionValues(pos.x,pos.y + 1.5, pos.z);
 //			m_view.camera.setTargetValues(forward.x,forward.y + 1.5, forward.z);
 		}
@@ -230,10 +230,10 @@ package
 				m_view.camera.moveBackward(1);
 			
 			if(m_key[Keyboard.D])
-				m_view.camera.yaw(-1)
+				m_view.camera.yaw(1)
 			
 			if(m_key[Keyboard.A])
-				m_view.camera.yaw(1)
+				m_view.camera.yaw(-1)
 					
 			if(m_key[Keyboard.R])
 				m_view.camera.moveUp(1)

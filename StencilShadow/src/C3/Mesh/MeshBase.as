@@ -173,8 +173,6 @@ package C3.Mesh
 		
 		public function updateTransform():void
 		{
-//			if(this is Object3DContainer)trace(m_rotate);
-			
 			m_decomposedMatrix[0].x = m_pos.x;
 			m_decomposedMatrix[0].y = m_pos.y;
 			m_decomposedMatrix[0].z = m_pos.z;
@@ -207,7 +205,7 @@ package C3.Mesh
 		protected var m_decomposedMatrix : Vector.<Vector3D> = new Vector.<Vector3D>();
 		protected var m_tempRotation : Vector3D = new Vector3D();
 		protected var m_material : IMaterial;
-		protected var m_transformDirty : Boolean;
+		protected var m_transformDirty : Boolean = true;
 		
 		public var userData : Object;
 	}

@@ -80,6 +80,9 @@ package C3.Parser
 		
 		public override function render(context:Context3D, camera:ICamera):void
 		{
+			m_context = context;
+			m_camera = camera;
+			
 			if(m_transformDirty)
 				updateTransform();
 			
@@ -132,6 +135,7 @@ package C3.Parser
 			obj.setShader(shader);
 			
 			obj.castShadow = castShadow;
+			obj.camera = m_camera;
 			obj.receiveShadow = receiveShadow;
 //			obj.rotateY = -180;
 			obj.buttonMode = m_buttonMode;
