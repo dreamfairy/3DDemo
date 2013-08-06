@@ -1,15 +1,10 @@
 package C3.Animator
 {
-	import com.adobe.utils.AGALMiniAssembler;
-	
 	import flash.display3D.Context3D;
-	import flash.display3D.Context3DProgramType;
-	import flash.display3D.Context3DVertexBufferFormat;
-	import flash.display3D.Program3D;
-	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
+	import flash.utils.getTimer;
 	
 	import C3.IDispose;
 	import C3.Object3D;
@@ -21,6 +16,7 @@ package C3.Animator
 	import C3.MD5.MD5Joint;
 	import C3.MD5.MD5MeshData;
 	import C3.MD5.Quaternion;
+	import C3.Parser.Model.IJoint;
 
 	public class Animator implements IDispose
 	{
@@ -35,8 +31,6 @@ package C3.Animator
 			
 			if(!m_hasAnimation){
 				m_hasAnimation = true;
-				if(m_context)createShader();
-				else m_needToUpdateAnimProgram = true;
 			}
 		}
 		
@@ -60,127 +54,33 @@ package C3.Animator
 		public function bind(target : MeshGeoentity) : void
 		{
 			m_model = target;
-			m_bufferFormat = "float" + m_model.maxJoints;
 		}
-		
-		
-		private function createShader() : void
-		{
-			m_shader ||= m_context.createProgram();
-			m_shader.upload(updateVertesProgram().agalcode,updateFragmentProgram().agalcode);
-			if(m_needToUpdateAnimProgram)m_needToUpdateAnimProgram = false;
-		}
-		
-		/**
-		 * 0顶点
-		 * 1uv
-		 * 2骨骼
-		 * 3权重
-		 * 124世界坐标
-		 */
-		private function updateVertesProgram() : AGALMiniAssembler
-		{
-			var code : String = "";
-			if(!m_model.useCPU){
-				//骨骼和权重
-				var indexStream : String = "va2";
-				var weightStream : String = "va3";
-				var indices : Array = [ indexStream + ".x", indexStream + ".y", indexStream + ".z", indexStream + ".w" ];
-				var weights : Array = [ weightStream + ".x", weightStream + ".y", weightStream + ".z", weightStream + ".w" ];
-				
-				for(var j : int = 0; j < m_model.maxJoints; ++j){
-					code += "m44 vt1, va0, vc[" + indices[j] + "]\n" +
-						//将骨骼坐标乘以权重值
-						"mul vt1, vt1, " + weights[j] + "\n";
-					//初始化vt2
-					if(j == 0) code += "mov vt2, vt1 \n";
-					else code += "add vt2, vt2, vt1 \n";
-					
-				}
-				
-				//将顶点转为世界坐标
-				code += "m44 op, vt2, vc124 \n" +
-					"mov v0, va1";
-			}else{
-				code = "m44 op, va0, vc124 \n"+
-					"mov v0, va1 \n";
-			}
-			
-			var vertexShader : AGALMiniAssembler = new AGALMiniAssembler();
-			vertexShader.assemble(Context3DProgramType.VERTEX, code);
-			
-			return vertexShader;
-		}
-		
-		/**
-		 * 0纹理
-		 * 1法线
-		 * 2反射
-		 */
-		private function updateFragmentProgram() : AGALMiniAssembler
-		{
-			var code : String = m_model.material.getFragmentStr(null)
-//				"tex ft0 v0 fs0<2d linear wrap>\n"+
-//				"mov oc ft0\n";
-			
-			var fragmentShader : AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentShader.assemble(Context3DProgramType.FRAGMENT, code);
-			
-			return fragmentShader;
-		}
+
 		
 		public function render(context3D : Context3D) : Boolean
 		{
 			if(!m_needRender) return false;
-			m_context = context3D;
-			if(!m_shader || m_needToUpdateAnimProgram)createShader();
 			
-			m_currentFrame = ++m_frame % m_totalFrame;
-			m_currentFrameData = m_currentAnimGeoentity.frameDatas[m_currentFrame];
+			var now : int = getTimer();
 			
-			CalcMeshAnim();
-			
-			m_context.setProgram(m_shader);
-			m_model.updateMatrix();
-			m_model.updateMaterial();
-			
-			var child : Object3D;
-			for each(child in m_model.children)
-			{
-				m_currentMeshData = child.userData.meshData as MD5MeshData;
-				CalcMeshAnim();
+			if(now - m_lastTime > m_frameRate){
+				m_currentFrame = ++m_frame % m_totalFrame;
+				m_currentFrameData = m_currentAnimGeoentity.frameDatas[m_currentFrame];
 				
-				if(!m_model.useCPU){
-					//上传骨骼和权重
-					m_context.setVertexBufferAt(2, child.jointIndexBuffer, 0, m_bufferFormat);
-					m_context.setVertexBufferAt(3, child.jointWeightBuffer, 0, m_bufferFormat);
-				}else{
+				for each(var child : Object3D in m_model.children)
+				{
+					CalcMeshAnim();
 					cpuCalcJoint(child);
 				}
-				
-				var vertexBuffer : VertexBuffer3D = m_model.useCPU ? m_cpuAnimVertexBuffer : child.vertexBuffer;
-				
-				m_context.setVertexBufferAt(0,vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
-				m_context.setVertexBufferAt(1,child.uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);
-				m_context.drawTriangles(child.indexBuffer);
+				m_lastTime = now;
 			}
 			
-			free();
 			return true;
-		}
-		
-		private function free() : void
-		{
-			m_cpuAnimVertexBuffer = null;
-			
-			for(var i : int = 0; i < 4; i++){
-				m_context.setVertexBufferAt(i,null);
-			}
 		}
 		
 		private function cpuCalcJoint(meshData : Object3D) : void
 		{
-			var vertexLen : int = m_currentMeshData.md5_vertex.length;
+			var vertexLen : int = meshData.vertexRawData.length/3;
 			
 			//当前索引
 			var indices : Vector.<Number> = meshData.jointIndexRawData;
@@ -193,8 +93,8 @@ package C3.Animator
 			var temp : Vector3D = new Vector3D();
 			var curVert : Vector3D = new Vector3D();
 			
-			m_cpuAnimVertexRawData ||= new Vector.<Number>();
-			m_cpuAnimVertexRawData.length = 0;
+			var cpuAnimVertexRawData : Vector.<Number> = new Vector.<Number>();
+			cpuAnimVertexRawData.concat(meshData.vertexRawData);
 			
 			var l : int = 0;
 			for(var i : int = 0; i < vertexLen; i++)
@@ -215,16 +115,19 @@ package C3.Animator
 					l++;
 				}
 				
-				m_cpuAnimVertexRawData.push(result.x,result.y,result.z);
+				cpuAnimVertexRawData[startIndex]		= result.x;
+				cpuAnimVertexRawData[startIndex + 1]	= result.y;
+				cpuAnimVertexRawData[startIndex + 2]	= result.z;
 			}
 			
-			m_cpuAnimVertexBuffer ||= m_context.createVertexBuffer(m_cpuAnimVertexRawData.length/3,3);
-			m_cpuAnimVertexBuffer.uploadFromVector(m_cpuAnimVertexRawData,0,m_cpuAnimVertexRawData.length/3);
+			if(meshData.vertexBuffer){
+				meshData.vertexBuffer.uploadFromVector(cpuAnimVertexRawData,0,cpuAnimVertexRawData.length/3);
+			}
 		}
 		
 		private function CalcMeshAnim() : void
 		{
-			var joints : Vector.<MD5Joint> = new Vector.<MD5Joint>();
+			var joints : Vector.<IJoint> = m_model.joints;
 			var jointsNum : int = joints.length;
 			
 			if(m_model.useCPU){
@@ -272,13 +175,13 @@ package C3.Animator
 				matrix3D.appendTranslation(animatedPos.x, animatedPos.y, animatedPos.z);
 				
 				//取出当前关节
-				joint = joints[i];
+				joint = joints[i] as MD5Joint;
 				
 				if(joint.parentIndex < 0){
 					joint.bindPose = matrix3D;
 				}else{
 					//如果该关节有父级，需要先附带上父级的旋转和偏移
-					parentJoint = joints[joint.parentIndex];
+					parentJoint = joints[joint.parentIndex] as MD5Joint;
 					matrix3D.append(parentJoint.bindPose);
 					joint.bindPose = matrix3D;
 				}
@@ -287,11 +190,13 @@ package C3.Animator
 				matrix3D.append(joint.bindPose);
 				
 				var vc : int = i * 4;
-				if(m_model.useCPU){
-					m_cpuAnimMatrix[vc] = matrix3D;
-				}else{
-					m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, vc, matrix3D, true);
-				}
+				m_cpuAnimMatrix[vc] = matrix3D;
+				
+//				if(m_model.useCPU){
+//					m_cpuAnimMatrix[vc] = matrix3D;
+//				}else{
+//					m_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, vc, matrix3D, true);
+//				}
 			}
 		}
 		
@@ -316,6 +221,8 @@ package C3.Animator
 		private var m_currentMeshData : MD5MeshData;
 		private var m_currentAnimGeoentity : AnimGeoentity;
 		
+		private var m_frameRate : uint = 25;
+		private var m_lastTime : int = 0;
 		private var m_frame : int = 0;
 		private var m_currentActionName : String;
 		private var m_currentFrame : int;
@@ -325,14 +232,8 @@ package C3.Animator
 		private var m_loop : int;
 		private var m_needRender : Boolean;
 		private var m_hasAnimation : Boolean = false;
-		private var m_needToUpdateAnimProgram : Boolean = false;
 		private var m_bufferFormat : String;
 		
 		private var m_cpuAnimMatrix : Vector.<Matrix3D>;
-		private var m_cpuAnimVertexRawData : Vector.<Number>;
-		private var m_cpuAnimVertexBuffer : VertexBuffer3D;
-		
-		private var m_shader : Program3D;
-		private var m_context : Context3D;
 	}
 }

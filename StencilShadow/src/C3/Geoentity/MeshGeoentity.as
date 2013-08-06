@@ -1,6 +1,7 @@
 package C3.Geoentity
 {
 	import C3.Object3DContainer;
+	import C3.Animator.SkeletalAnmationData;
 	import C3.Material.IMaterial;
 	import C3.Parser.Model.IJoint;
 
@@ -37,6 +38,11 @@ package C3.Geoentity
 		}
 		
 		public function updateMaterial() : void
+		{
+			throw new Error("这货需要重写");
+		}
+		
+		public function get skeletalAnimationData() : SkeletalAnmationData
 		{
 			throw new Error("这货需要重写");
 		}

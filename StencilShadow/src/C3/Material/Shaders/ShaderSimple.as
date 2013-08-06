@@ -63,7 +63,7 @@ package C3.Material.Shaders
 			context3D.setCulling(m_params.culling);
 			
 			context3D.setProgram(getProgram(context3D));
-			context3D.setTextureAt(fcTexture,m_material.getTexture(context3D));
+			context3D.setTextureAt(fcTexture,m_renderTarget.material.getTexture(context3D));
 			context3D.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX,vcProjection,m_renderTarget.modelViewProjMatrix,true);
 			context3D.setVertexBufferAt(vaPos,m_renderTarget.vertexBuffer,0,Context3DVertexBufferFormat.FLOAT_3);
 			context3D.setVertexBufferAt(vaUV,m_renderTarget.uvBuffer,0,Context3DVertexBufferFormat.FLOAT_2);

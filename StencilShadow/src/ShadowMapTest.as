@@ -16,10 +16,12 @@ package
 	import C3.Object3DContainer;
 	import C3.View;
 	import C3.Camera.Camera;
+	import C3.Core.Managers.TextureManager;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Event.MouseEvent3D;
 	import C3.Geoentity.AnimGeoentity;
 	import C3.Material.CubeMaterial;
+	import C3.Material.IMaterial;
 	import C3.Material.TextureMaterial;
 	import C3.Mesh.PlaneMesh;
 	import C3.Mesh.SphereMesh;
@@ -43,7 +45,7 @@ package
 			
 			m_view = new View(stage.stageWidth,stage.stageHeight,true);
 //			m_view.camera.setCameraType(Camera.LANDOBJECT);
-			m_view.camera.setPositionValues(0,-2,0);
+			m_view.camera.setPositionValues(0,-2,40);
 			addChild(m_view);
 			addChild(new Stats());
 			
@@ -53,8 +55,7 @@ package
 			m_bitmap = new Bitmap();
 			addChild(m_bitmap);
 			
-			m_skyBox = new SkyBoxBase("sky", new CubeMaterial(skyData));
-			m_view.skyBox = m_skyBox;
+			m_view.skyBox = new SkyBoxBase("sky", new CubeMaterial(skyData));
 			
 			m_tip = "";
 //			m_tip = "<a href='http://www.dreamfairy.cn'><u>2007-2013 苍白的茧 | 追逐繁星的苍之茧</u></a>\r移动鼠标点选物体";
@@ -69,7 +70,7 @@ package
 			m_info.height = m_info.textHeight + 10;
 			
 			m_container = new Object3DContainer("root");
-			m_container.z = -30;
+//			m_container.z = -30;
 			
 			var bottomPlane : PlaneMesh = new PlaneMesh("floor",10,10, 2, AOI3DAXIS.XZ, new TextureMaterial(floorData));
 			bottomPlane.y = -5;
@@ -92,29 +93,33 @@ package
 			backPlane.onMouseClick.add(onMouseClick);
 			m_container.addChild(backPlane);
 			
-//			m_model = new MD5Loader("md5Mesh", new TextureMaterial(textureData));
-//			m_model.load(new mesh());
-//			m_model.rotateX = -90;
-//			m_model.setScale(.1,.1,.1);
-//			m_model.y = -5;
-//			m_container.addChild(m_model);
+			m_model = new MD5Loader("md5Mesh", Vector.<IMaterial>([new TextureMaterial(meiziTou), new TextureMaterial(meiziZhuang), new TextureMaterial(meiziDao), new TextureMaterial(meiziLian)]));
+			m_model.castShadow = true;
+			m_model.load(new mesh());
+			m_model.rotateX = -90;
+			m_model.setScale(.1,.1,.1);
+			m_model.y = -5;
+			m_model.x = 10;
+			m_model.z = 10;
+//			m_model.z = -15;
+			m_container.addChild(m_model);
 			
 			m_sphere = new SphereMesh("earth",15,15, new TextureMaterial(earthData));
 			m_sphere.setScale(5,5,5);
-			m_sphere.y = -2;
-			m_sphere.z = -15;
+//			m_sphere.y = -2;
+//			m_sphere.z = -15;
 			m_sphere.pickEnabled = true;
 			m_sphere.interactive = true;
 			m_sphere.buttonMode = true;
 			m_sphere.castShadow = true;
 			m_sphere.receiveShadow = true;
 			m_sphere.onMouseClick.add(onMouseClick);
-			m_view.scene.addChild(m_sphere);
+//			m_model.addChild(m_sphere);
 			
 			m_ogreModel = new ORGEMeshLoader("ogre", new TextureMaterial(ogreData));
 			m_ogreModel.loadMesh("../source/ogre/PET_CAT.MESH.xml");
-			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
-			m_ogreModel.animatorset.onStateLoaded.add(onStateLoaded);
+//			m_ogreModel.loadSkeleton("../source/ogre/WALK.SKELETON.xml");
+//			m_ogreModel.animatorset.onStateLoaded.add(onStateLoaded);
 			m_ogreModel.onMouseClick.add(onMouseClick);
 			m_ogreModel.InteractiveChildren = m_ogreModel.PickChildren = true;
 			m_ogreModel.buttonMode = true;
@@ -125,11 +130,11 @@ package
 			m_ogreModel.rotateY = -180;
 			m_container.addChild(m_ogreModel);
 			
-//			loadAnim();
+			loadAnim();
 			
 			m_view.scene.addChild(m_container);
-			m_view.camera.setGlobalLightTarget(0,0,-30);
-			m_view.camera.setGlobalLightPos(100,25,-18);
+			m_view.camera.setGlobalLightTarget(0,0,0);
+			m_view.camera.setGlobalLightPos(50, 50, 20);
 			
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
@@ -154,8 +159,8 @@ package
 		
 		private function loadAnim() : void
 		{
-			var animList : Array = [new idelAnim(),new standAnim(),new walkAnim()];
-			var actionList : Array = ["idel","stand","walk"];
+			var animList : Array = [new idelAnim()];
+			var actionList : Array = ["idel"];
 			var animLoader : MD5AnimLoader;
 			while(animList.length)
 			{
@@ -169,7 +174,12 @@ package
 		{
 			var loader : MD5AnimLoader = e.target as MD5AnimLoader;
 			loader.removeEventListener(AOI3DLOADEREVENT.ON_ANIM_LOADED, onAnimLoaded);
-			m_model.addAnimation(loader as AnimGeoentity);
+			var anim : AnimGeoentity = loader as AnimGeoentity;
+			m_model.addAnimation(anim);
+			
+			if(anim.name == "idel"){
+				m_model.animator.play("idel");
+			}
 		}
 		
 		private var t : Number = 0;
@@ -270,22 +280,24 @@ package
 		private var m_info : TextField;
 		private var m_tip : String;
 		private var m_bitmap : Bitmap;
-		private var m_skyBox : SkyBoxBase;
 		
-		[Embed(source="../source/hellknight/hellknight.md5mesh", mimeType="application/octet-stream")]
+		[Embed(source="../source/meizi/meizi.md5mesh", mimeType="application/octet-stream")]
 		private var mesh : Class;
 		
-		[Embed(source="../source/hellknight/idle2.md5anim", mimeType="application/octet-stream")]
+		[Embed(source="../source/meizi/meizi.md5anim", mimeType="application/octet-stream")]
 		private var idelAnim : Class;
 		
-		[Embed(source="../source/hellknight/stand.md5anim", mimeType="application/octet-stream")]
-		private var standAnim : Class;
+		[Embed(source="../source/meizi/chujitou.jpg")]
+		private var meiziTou : Class;
 		
-		[Embed(source="../source/hellknight/walk7.md5anim", mimeType="application/octet-stream")]
-		private var walkAnim : Class;
+		[Embed(source="../source/meizi/chujizhuang3.jpg")]
+		private var meiziZhuang : Class;
 		
-		[Embed(source="../source/hellknight/hellknight_diffuse.jpg")]
-		private var textureData : Class;
+		[Embed(source="../source/meizi/nvlian1.jpg")]
+		private var meiziLian : Class;
+		
+		[Embed(source="../source/meizi/dao.jpg")]
+		private var meiziDao : Class;
 		
 		[Embed(source="../source/floor1.jpg")]
 		private var floorData : Class;

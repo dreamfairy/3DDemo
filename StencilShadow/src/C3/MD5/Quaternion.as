@@ -1,10 +1,10 @@
 package C3.MD5
 {
-	import C3.Matrix3DUtils;
-	
 	import flash.geom.Matrix3D;
 	import flash.geom.Orientation3D;
 	import flash.geom.Vector3D;
+	
+	import C3.Matrix3DUtils;
 
 	/**
 	 * 一个四元数对象可以用来表示旋转
@@ -39,6 +39,14 @@ package C3.MD5
 		 * @param w The w value of the quaternion.
 		 */
 		public function Quaternion(x : Number = 0, y : Number = 0, z : Number = 0, w : Number = 1)
+		{
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.w = w;
+		}
+		
+		public function setTo(x : Number, y : Number, z : Number, w : Number) : void
 		{
 			this.x = x;
 			this.y = y;

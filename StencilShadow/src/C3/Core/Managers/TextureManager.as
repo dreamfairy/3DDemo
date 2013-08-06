@@ -4,13 +4,11 @@ package C3.Core.Managers
 	import flash.display3D.Context3D;
 	import flash.display3D.textures.TextureBase;
 	import flash.utils.Dictionary;
-	
-	import C3.IDispose;
 
 	/**
 	 * 缓存不同Context的Texture
 	 */
-	public class TextureManager implements IDispose
+	public class TextureManager
 	{
 		public function TextureManager()
 		{

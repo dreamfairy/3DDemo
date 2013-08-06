@@ -57,6 +57,7 @@ package C3.Material.Shaders
 		public override function render(context3D:Context3D):void
 		{
 			//			context3D.clear();
+			if(null == m_vertexBuffer) return;
 			
 			m_renderTarget.setContext(context3D);
 			context3D.setDepthTest(m_params.writeDepth, m_params.depthFunction);

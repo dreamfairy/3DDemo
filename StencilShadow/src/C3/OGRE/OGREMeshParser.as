@@ -6,6 +6,7 @@ package C3.OGRE
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	
+	import C3.Animator.SkeletalAnmationData;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Parser.Model.IJoint;
 
@@ -244,6 +245,11 @@ package C3.OGRE
 		public function get joints() : Vector.<IJoint>
 		{
 			return m_ogreAnimParser.joints;
+		}
+		
+		public function get skeletalAnimationData() : SkeletalAnmationData
+		{
+			return m_ogreAnimParser.skeletalAnimationData;
 		}
 		
 		public var ogre_mesh : Vector.<OgreMeshData> = new Vector.<OgreMeshData>();

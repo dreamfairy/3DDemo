@@ -3,10 +3,8 @@ package C3
 	import flash.display3D.Context3D;
 	import flash.geom.Matrix3D;
 	
-	import C3.Camera.Camera;
 	import C3.Camera.ICamera;
 	import C3.Material.IMaterial;
-	import C3.PostRender.IPostRender;
 	
 	public class Object3DContainer extends Object3D
 	{

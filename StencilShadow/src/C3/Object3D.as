@@ -10,7 +10,6 @@ package C3
 	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
 	
-	import C3.Camera.Camera;
 	import C3.Camera.ICamera;
 	import C3.Core.Managers.MaterialManager;
 	import C3.Material.IMaterial;
@@ -391,13 +390,6 @@ package C3
 		public function get material() : IMaterial
 		{
 			return m_material;
-		}
-		
-		public override function updateTransform():void
-		{
-			if(m_name == "cat")
-				trace("here");
-			super.updateTransform();
 		}
 		
 		/**

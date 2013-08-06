@@ -6,9 +6,7 @@ package C3.Mesh
 	import flash.geom.Vector3D;
 	
 	import C3.IDispose;
-	import C3.Object3DContainer;
 	import C3.Quaternion;
-	import C3.Light.SimpleLight;
 	import C3.Material.ColorMaterial;
 	import C3.Material.IMaterial;
 

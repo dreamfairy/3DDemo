@@ -13,6 +13,8 @@ package C3.MD5
 	import flash.geom.Point;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
+	
+	import C3.Parser.Model.IJoint;
 
 	/**
 	 * MD5结果
@@ -140,7 +142,7 @@ package C3.MD5
 					//取出当前顶点的权重
 					var weight : MD5Weight = meshData.md5_weight[vertex.weight_index + j];
 					//取出当前顶点对应的关节
-					var joint2 : MD5Joint = md5MeshParser.md5_joint[weight.jointID];
+					var joint2 : MD5Joint = md5MeshParser.md5_joint[weight.jointID] as MD5Joint;
 					
 					//将权重转换为关节坐标系为参考的值
 					var wv : Vector3D = joint2.bindPose.transformVector(weight.pos);
@@ -350,7 +352,7 @@ package C3.MD5
 		private function CalcMeshAnim(frameData : MD5FrameData) : void
 		{
 			//取出关节数据
-			var joints : Vector.<MD5Joint> = md5MeshParser.md5_joint;
+			var joints : Vector.<IJoint> = md5MeshParser.md5_joint;
 			var jointsNum : int = joints.length;
 			
 			cpuAnimMatrix ||= new Vector.<Matrix3D>(jointsNum * 4, true);
@@ -396,13 +398,13 @@ package C3.MD5
 				matrix3D.appendTranslation(animatedPos.x, animatedPos.y, animatedPos.z);
 				
 				//取出当前关节
-				joint = joints[i];
+				joint = joints[i] as MD5Joint;
 				
 				if(joint.parentIndex < 0){
 					joint.bindPose = matrix3D;
 				}else{
 					//如果该关节有父级，需要先附带上父级的旋转和偏移
-					parentJoint = joints[joint.parentIndex];
+					parentJoint = joints[joint.parentIndex] as MD5Joint;
 					matrix3D.append(parentJoint.bindPose);
 					joint.bindPose = matrix3D;
 				}

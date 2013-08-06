@@ -6,6 +6,7 @@ package C3.MD5
 	import flash.utils.ByteArray;
 	
 	import C3.Event.AOI3DLOADEREVENT;
+	import C3.Parser.Model.IJoint;
 
 	public class MD5MeshParser extends EventDispatcher
 	{
@@ -40,7 +41,7 @@ package C3.MD5
 						break;
 					case NUM_JOINTS_TOKEN:
 						num_joints = getNextInt();
-						md5_joint = new Vector.<MD5Joint>();
+						md5_joint = new Vector.<IJoint>();
 						break;
 					case NUM_MESHES_TOKEN:
 						num_meshes = getNextInt();
@@ -425,7 +426,7 @@ package C3.MD5
 		}
 		
 		public var num_joints : int;
-		public var md5_joint : Vector.<MD5Joint>;
+		public var md5_joint : Vector.<IJoint>;
 		public var num_meshes : int;
 		public var md5_mesh : Vector.<MD5MeshData>;
 		public var maxJointCount : int;

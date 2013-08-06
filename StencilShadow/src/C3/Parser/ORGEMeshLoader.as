@@ -4,7 +4,6 @@ package C3.Parser
 	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
-	import flash.geom.Vector3D;
 	import flash.net.URLLoader;
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
@@ -13,7 +12,7 @@ package C3.Parser
 	import C3.Object3D;
 	import C3.Animator.AnimalState;
 	import C3.Animator.AnimationSet;
-	import C3.Camera.Camera;
+	import C3.Animator.SkeletalAnmationData;
 	import C3.Camera.ICamera;
 	import C3.Event.AOI3DLOADEREVENT;
 	import C3.Geoentity.MeshGeoentity;
@@ -209,6 +208,11 @@ package C3.Parser
 		public override function get joints():Vector.<IJoint>
 		{
 			return m_ogreMeshParser.joints;
+		}
+		
+		public override function get skeletalAnimationData() : SkeletalAnmationData
+		{
+			return m_ogreMeshParser.skeletalAnimationData;
 		}
 		
 		public override function get meshDatas():*

@@ -27,63 +27,27 @@ package C3.OGRE
 		private var m_derivedScale : Vector3D;
 		private var m_derivedRotation : Quaternion;
 		private var m_dirty : Boolean = true;
-		
-		public var frameIndex : int = 0;
-		public var frameDataList : OGREFrameList;
-		public var frameTimeList : Vector.<Number>;
+
 		public var quaternion : Quaternion;
-		
-		public var bindPose : Matrix3D;
-		public var inverseBindPose : Matrix3D;
-		
-		public var hasFrameData : Boolean = false;
-		public var frameStartTime : Number;
+		public var children : Vector.<OGREJoint> = new Vector.<OGREJoint>();
 		
 		/**
 		 * 当前骨骼的变化矩阵
 		 */
 		public var transformationMatrix:Matrix3D;
 		
-		private var rotatedPosition : Vector3D;
-		private var totalFrame : uint;
-		private var frame : int;
-		private var endTime : Number = 0;
-		private var tick : Number = 0;
 		
-		public var hasCalc : Boolean = false;
-		
-		public function calc() : void
+		public function OGREJoint() : void
 		{
-			hasCalc = true;
-			axis.normalize();
-			
 			transformationMatrix = new Matrix3D();
-			
-//			quaternion = new Quaternion();
-//			quaternion.fromAxisAngle(axis,angle);
-//			bindPose = quaternion.toMatrix3D();
-			
-			bindPose = new Matrix3D();
-			bindPose.appendRotation(angle,axis,position);
-			inverseBindPose = bindPose.clone();
-			inverseBindPose.invert();
-			
-			hasFrameData = null != frameDataList;
-			if(!hasFrameData) return;
-			
-			frameTimeList = new Vector.<Number>();
-			var len : uint = frameDataList.frameData.length;
-			for(var i : int = 0; i < len; i++)
-			{
-				var frameData : OGREFrameData = frameDataList.frameData[i];
-				frameTimeList.push(frameData.time);
-			}
-			
-			frame = 0;
-			totalFrame = frameDataList.frameData.length;
-			frameStartTime = frameTimeList[0];
 		}
 		
+		public function addChild(child : OGREJoint) : void
+		{
+			if(children.indexOf(child) == -1)
+				children.push(child);
+		}
+
 		/**
 		 * 获取偏移值
 		 * 如果有父级，叠加上父级的偏移值
@@ -143,6 +107,21 @@ package C3.OGRE
 		}
 		
 		/**
+		 * 重新验证骨骼的旋转，位移和缩放
+		 */
+		public function invalidate():void{
+			m_dirty = true;
+			invalidateChildren();
+		}
+		
+		private function invalidateChildren() : void
+		{
+			for each(var child : OGREJoint in children){
+				child.invalidate();
+			}
+		}
+		
+		/**
 		 * 更新骨骼，使用该骨骼父级骨骼，或者更新规定的矩阵作为当前的变换
 		 * @param boneMatrix
 		 * @return
@@ -163,14 +142,14 @@ package C3.OGRE
 					);
 					
 					//找到当前Rotation变化 通过移除当前Rotation中的 Bind Pose 的 Rotation
-					var _locaRotate : Quaternion = getDerivedOrientation().multiply2(invRotation, tempQua);
+					var _locRotate : Quaternion = getDerivedOrientation().multiply2(invRotation, tempQua);
 					
 					//合并位移 和 Bind Pose 的反转位移
 					//位移是相对于缩放和旋转的
 					//首先要反反转变换原来派生的位移到骨骼绑定空间
 					//然后变换当前的派生骨骼空间
 					var _locTranslate : Vector3D = getDerivedPosition().add(
-						_locaRotate.multiplyVector2(
+						_locRotate.multiplyVector2(
 							new Vector3D(
 								locScale.x * invTranslation.x,
 								locScale.y * invTranslation.y,
@@ -178,7 +157,7 @@ package C3.OGRE
 							)
 						)
 					);
-					transformationMatrix.recompose(Vector.<Vector3D>([_locTranslate, _locaRotate.toVector3D(), locScale]), Orientation3D.QUATERNION);
+					transformationMatrix.recompose( Vector.<Vector3D>([_locTranslate, _locRotate.toVector3D(), locScale]), Orientation3D.QUATERNION);
 //					transformationMatrix.transpose();
 					
 					m_dirty = false;
@@ -200,29 +179,11 @@ package C3.OGRE
 			
 			var qua : Quaternion = getDerivedOrientation();
 			invRotation = qua.inverse();
-		}
-		
-		public function get nextFrameData() : OGREFrameData
-		{
-			frameIndex = frame++ % totalFrame;
 			
-			if(frameIndex == frameDataList.frameData.length - 1){
-				endTime = tick;
-				frame=0;
-			}
-						
-			return frameDataList.frameData[frameIndex];
-		}
-		
-		public function get currentFrameData() : OGREFrameData
-		{
-			return frameDataList.frameData[frameIndex];
-		}
-		
-		public function getNextFrameTime(deltaTime : Number) : Number
-		{
-			tick = deltaTime;
-			return frame ? endTime + frameTimeList[frameIndex] : endTime + frameStartTime;
+//			trace("父级",name);
+//			for each(var child : OGREJoint in children){
+//				trace("子集",child.name);
+//			}
 		}
 	}
 }

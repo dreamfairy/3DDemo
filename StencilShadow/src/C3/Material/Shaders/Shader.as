@@ -1,13 +1,13 @@
 package C3.Material.Shaders
 {
-	import C3.IDispose;
-	import C3.Material.IMaterial;
-	import C3.Object3D;
-	
-	import flash.display.ShaderParameter;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Program3D;
 	import flash.utils.ByteArray;
+	
+	import C3.IDispose;
+	import C3.Object3D;
+	import C3.Material.IMaterial;
 
 	public class Shader implements IDispose
 	{
@@ -22,6 +22,9 @@ package C3.Material.Shaders
 		public static const SHADOW_MAP : uint = 1;
 		public static const SIMPLE : uint = 2;
 		public static const SKYBOX : uint = 3;
+		public static const RENDER_TO_TEXTURE : uint = 4;
+		public static const BLUR : uint = 5;
+		public static const BLOOM : uint = 6;
 		
 		public function Shader(renderTarget : Object3D = null, context : Context3D = null)
 		{
@@ -89,7 +92,8 @@ package C3.Material.Shaders
 		
 		public function render(context3D : Context3D) : void
 		{
-			throw new Error("这货需要重写");
+			if(m_params.blendEnabled) context3D.setBlendFactors(m_params.blendSource,m_params.blendDestination);
+			else context3D.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
 		}
 		
 		public function get type() : uint

@@ -69,7 +69,7 @@ package C3.Material.Shaders
 		public override function render(context3D:Context3D):void
 		{
 			context3D.setRenderToTexture(m_material.getTexture(context3D),true,2,0);
-			context3D.clear();
+			context3D.clear(1,1,1);
 			
 			context3D.setDepthTest(m_params.writeDepth, m_params.depthFunction);
 			context3D.setCulling(m_params.culling);

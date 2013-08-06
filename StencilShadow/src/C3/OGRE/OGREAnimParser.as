@@ -1,13 +1,14 @@
 package C3.OGRE
 {
-	import C3.MD5.Quaternion;
-	import C3.Parser.Model.IJoint;
-	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Vector3D;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	
+	import C3.Animator.SkeletalAnmationData;
+	import C3.MD5.Quaternion;
+	import C3.Parser.Model.IJoint;
 
 	public class OGREAnimParser extends EventDispatcher
 	{
@@ -41,23 +42,24 @@ package C3.OGRE
 			}
 			
 			
-			for each(var parentJoint : JointTree in m_jointTree){
-				for each(var childJoint : JointTree in m_jointTree){
-					//如果是相同对象，跳过
-					if(childJoint.NodeJoint.name == parentJoint.NodeJoint.name) continue;
-					//如果是父亲
-					if(childJoint.NodeJoint.parent && childJoint.NodeJoint.parent.name == parentJoint.NodeJoint.name){
-						parentJoint.push(childJoint);
-					}
-				}
-			}
+//			for each(var parentJoint : JointTree in m_jointTree){
+//				for each(var childJoint : JointTree in m_jointTree){
+//					//如果是相同对象，跳过
+//					if(childJoint.NodeJoint.name == parentJoint.NodeJoint.name) continue;
+//					//如果是父亲
+//					if(childJoint.NodeJoint.parent && childJoint.NodeJoint.parent.name == parentJoint.NodeJoint.name){
+//						parentJoint.NodeJoint.addChild(childJoint.NodeJoint);
+//						parentJoint.push(childJoint);
+//					}
+//				}
+//			}
+//			
+//			var jointTree : JointTree = m_jointTree[m_rootBoneName];
+//			m_jointTree = null;
 			
-			var jointTree : JointTree = m_jointTree[m_rootBoneName];
-			m_jointTree = null;
+//			getChildren(m_jointList, jointTree);
 			
-			m_jointList = new Vector.<IJoint>();
-			getChildren(m_jointList, jointTree);
-			
+//			m_jointList.shift();
 			
 			setBindPose();
 			
@@ -66,25 +68,20 @@ package C3.OGRE
 		
 		private function setBindPose() : void
 		{
-			var len : uint = m_jointList.length;
-			for(var i : int = 0; i < len; i++)
+			m_jointList = new Vector.<IJoint>();
+			for each(var bone : OGREJoint in m_jointCache)
 			{
-				OGREJoint(m_jointList[i]).setBindPose();
+				bone.setBindPose();
+				m_jointList.push(bone);
 			}
 		}
 		
 		private function getChildren(list : Vector.<IJoint>, tree : JointTree) : void
 		{
 			list.push(tree.NodeJoint);
-			if(!tree.NodeJoint.hasCalc)tree.NodeJoint.calc();
 			while(tree.children.length){
 				getChildren(list,tree.children.shift());
 			}
-		}
-		
-		private function jointSortFun(joint1 : OGREJoint, joint2 : OGREJoint) : int
-		{
-			return joint1.id > joint2.id ? 0 : -1;
 		}
 		
 		private function parseBone(node : XML) : void
@@ -114,7 +111,7 @@ package C3.OGRE
 					}
 				}
 				m_jointCache[bone.name] = bone;
-				m_jointTree[bone.name] = new JointTree(bone);
+//				m_jointTree[bone.name] = new JointTree(bone);
 				
 				if(bone.name == ROOT)
 					m_rootBoneName = bone.name;
@@ -135,8 +132,10 @@ package C3.OGRE
 			for each(boneParent in node.children()){
 				childBoneName = boneParent.@bone;
 				parentBoneName = boneParent.@parent;
+				
 				bone = m_jointCache[childBoneName];
 				bone.parent = m_jointCache[parentBoneName];
+				OGREJoint(m_jointCache[parentBoneName]).addChild(bone);
 			}
 		}
 		
@@ -144,42 +143,44 @@ package C3.OGRE
 		{
 			animationName = node[ANIMATION].@name;
 			animationDuration = node[ANIMATION].@length;
+			m_skeletalAnimationData = new SkeletalAnmationData();
 			
 			var trackNode : XMLList = node[ANIMATION][TRACKS];
 			var trackData : XML;
-			var frameDataList : OGREFrameList;
-			var frameData : OGREFrameData;
 			var joint : OGREJoint;
 			for each(trackData in trackNode.children())
 			{
-				frameDataList = new OGREFrameList();
-				frameDataList.name = trackData.@bone;
-				joint = m_jointCache[frameDataList.name];
-				joint.frameDataList = frameDataList;
 				var keyFrames : XML;
 				for each(keyFrames in trackData.children())
 				{
 					var keyFrame : XML;
+					var frame : uint = 0;
+					var time : Number;
 					for each(keyFrame in keyFrames.children())
 					{
-						frameData = new OGREFrameData();
-						frameData.time = keyFrame.@time;
+						time = keyFrame.@time;
+						
+						var translate : Vector3D;
+						var scale : Vector3D = new Vector3D();
+						var rotation : Quaternion;
 						
 						if(keyFrame.hasOwnProperty(TRANSLATE)){
-							frameData.translate = new Vector3D(keyFrame[TRANSLATE].@x,keyFrame[TRANSLATE].@y,keyFrame[TRANSLATE].@z);
+							translate = new Vector3D(keyFrame[TRANSLATE].@x,keyFrame[TRANSLATE].@y,keyFrame[TRANSLATE].@z);
 						}
 						
 						if(keyFrame.hasOwnProperty(SCALE)){
-							frameData.translate = new Vector3D(keyFrame[SCALE].@x,keyFrame[SCALE].@y,keyFrame[SCALE].@z);
+							scale = new Vector3D(keyFrame[SCALE].@x,keyFrame[SCALE].@y,keyFrame[SCALE].@z);
 						}
 						
 						if(keyFrame.hasOwnProperty(ROTATE)){
 							var angleData : XML = keyFrame[ROTATE][0];
-							frameData.rotate = angleData.@angle;
-							frameData.axis = new Vector3D(angleData[AXIS].@x,angleData[AXIS].@y,angleData[AXIS].@z);
+							rotation = new Quaternion();
+							rotation.fromAxisAngle(new Vector3D(angleData[AXIS].@x,angleData[AXIS].@y,angleData[AXIS].@z),
+								angleData.@angle);
 						}
 						
-						frameDataList.frameData.push(frameData);
+						skeletalAnimationData.addBoneData(frame,trackData.@bone,translate,rotation,scale);
+						frame++;
 					}
 				}
 			}
@@ -190,14 +191,21 @@ package C3.OGRE
 			return m_jointList;
 		}
 		
+		public function get skeletalAnimationData() : SkeletalAnmationData
+		{
+			return m_skeletalAnimationData;
+		}
+		
 		private var m_rootBoneName : String;
 		private var _textData : XML;
 		private var m_jointCache : Dictionary = new Dictionary();
 		private var m_jointList : Vector.<IJoint>;
-		private var m_jointTree : Dictionary = new Dictionary();
+//		private var m_jointTree : Dictionary = new Dictionary();
+		private var m_skeletalAnimationData : SkeletalAnmationData;
 		
 		public var animationName : String;
 		public var animationDuration : Number;
+		
 		
 		/**骨骼根节点**/
 		private static const ROOT : String = "Root";
